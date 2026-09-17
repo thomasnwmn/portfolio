@@ -9,7 +9,7 @@ export default function Navbar() {
             thomas<span className="text-chrome-mid">newman</span>
           </span>
           <span className="hidden text-[12px] text-paper-2 transition-colors group-hover:text-paper-1 lg:inline">
-            software engineer
+            computer engineer
           </span>
         </Link>
         <nav aria-label="Primary" className="min-w-0">
