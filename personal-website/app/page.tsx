@@ -10,7 +10,7 @@ export default function Home() {
             System Online
           </p>
           <h1 className="text-4xl md:text-6xl font-semibold tracking-[-0.02em] text-paper-0 mb-6 max-w-2xl">
-            Building interfaces that are{" "}
+            Building systems that are{" "}
             <span className="text-chrome-mid italic">fast, reliable,</span> and{" "}
             <span className="text-paper-1 border-b border-hairline-strong">
               beautifully engineered.

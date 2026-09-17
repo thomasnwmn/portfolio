@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 "use client";
 
 import { useRef, useMemo, useEffect } from "react";
@@ -81,11 +82,11 @@ function FluidParticles() {
       const dy = targetY - mouseY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       
-      // Wider repulsion radius (8), but much softer force
-      if (dist < 8) {
-        const force = Math.pow((8 - dist) / 8, 2); 
-        targetX += (dx / dist) * force * 1.5;
-        targetY += (dy / dist) * force * 1.5;
+      // Gentle repulsion effect (push apart slightly)
+      if (dist < 6) {
+        const force = Math.pow((6 - dist) / 6, 2);
+        targetX += (dx / dist) * force * 0.8;
+        targetY += (dy / dist) * force * 0.8;
       }
 
       // Very low lerp factor (0.015) for sluggish, fluid movement
@@ -96,8 +97,12 @@ function FluidParticles() {
     
     pointsRef.current.geometry.attributes.position.needsUpdate = true;
     
-    // Extremely slow rotation
-    pointsRef.current.rotation.y = time * 0.02;
+    // Subtle parallax (significantly reduced vertical tilt to avoid revealing edges)
+    const targetRotX = mouse.current.y * 0.02;
+    const targetRotY = time * 0.02 + mouse.current.x * 0.15;
+    
+    pointsRef.current.rotation.x += (targetRotX - pointsRef.current.rotation.x) * 0.05;
+    pointsRef.current.rotation.y += (targetRotY - pointsRef.current.rotation.y) * 0.05;
     pointsRef.current.rotation.z = Math.sin(time * 0.02) * 0.05;
   });
 

@@ -6,13 +6,13 @@ export default function About() {
           <h1 className="text-3xl font-semibold tracking-tight text-paper-0 mb-8">About</h1>
           <div className="text-paper-1 space-y-6 leading-relaxed">
             <p>
-              I'm a software engineer who builds fast, interactive, and beautifully designed web experiences.
+              I&apos;m a software engineer who builds fast, interactive, and beautifully designed web experiences.
             </p>
             <p>
               My approach focuses on engineering excellence and a minimalist aesthetic. I believe that a clean user interface requires a deeply considered architecture underneath.
             </p>
             <p>
-              When I'm not writing code, I enjoy exploring new technologies and writing about my findings.
+              When I&apos;m not writing code, I enjoy exploring new technologies and writing about my findings.
             </p>
           </div>
         </div>
