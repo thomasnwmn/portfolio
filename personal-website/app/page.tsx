@@ -10,10 +10,10 @@ export default function Home() {
             System Online
           </p>
           <h1 className="text-4xl md:text-6xl font-semibold tracking-[-0.02em] text-paper-0 mb-6 max-w-2xl">
-            Building systems that are{" "}
-            <span className="text-chrome-mid italic">fast, reliable,</span> and{" "}
-            <span className="text-paper-1 border-b border-hairline-strong">
-              beautifully engineered.
+            Engineering <span className="bg-gradient-to-r bg-clip-text from-paper-0 to-chrome-mid text-transparent">systems</span> that are{" "}
+            <span className="bg-gradient-to-r bg-clip-text from-paper-0 to-chrome-mid text-transparent italic">fast, reliable,</span> and{" "}
+            <span className="bg-gradient-to-r from-paper-0 to-chrome-mid bg-clip-text text-transparent">
+              beautiful.
             </span>
           </h1>
           <p className="text-paper-1 text-lg max-w-xl mb-10 leading-relaxed">
