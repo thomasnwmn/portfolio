@@ -17,8 +17,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-paper-1 text-lg max-w-xl mb-10 leading-relaxed">
-            I am a software engineer specializing in full-stack web development,
-            performance optimization, and interactive design.
+            Computer Engineer specializing in RISC-V, Embedded Systems, and Hardware Architecture.
           </p>
           <div className="flex flex-wrap gap-4">
             <a

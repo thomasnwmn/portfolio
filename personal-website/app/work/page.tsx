@@ -6,38 +6,38 @@ export default function Work() {
           THE REGISTRY
         </p>
         <h1 className="text-4xl md:text-5xl font-semibold tracking-[-0.02em] text-paper-0 mb-6">
-          One spine, four facets.
+          My Work.
         </h1>
         <p className="text-paper-1 text-lg max-w-2xl leading-relaxed">
-          Everything below is the same discipline pointed at a different surface: make systems legible — to people, to the architecture, and to the agents doing the reading now.
+          My work focuses on system architecture, embedded systems, and artificial intelligence, with a strong emphasis on performance, reliability, and user experience.
         </p>
       </div>
 
       <p className="font-mono text-[11px] text-paper-2 mb-8 tracking-widest uppercase">
-        04 BAYS · LIVE SCALE MODELS
+        04 BAYS · CURRENT PROJECTS
       </p>
 
       <div className="grid gap-px bg-hairline md:grid-cols-2 lg:grid-cols-2 border-t border-hairline">
         {[
           {
-            title: "Performance Engineering",
-            desc: "Full-stack optimization, bringing server response times from 2.2s down to 47ms through aggressive caching and edge computing.",
-            tags: ["next.js", "redis", "edge"]
+            title: "Automatic Wall-Avoiding Robot",
+            desc: "An autonomous robot that uses sensors and DC motors to navigate and avoid obstacles in its evnironment.",
+            tags: ["C++", "Arduino", "Motors"]
           },
           {
-            title: "System Architecture",
-            desc: "Designed and implemented distributed microservices that scale effortlessly under heavy load while maintaining zero downtime.",
-            tags: ["kubernetes", "go", "grpc"]
+            title: "Autonomous Plant-Watering System",
+            desc: "A system that automatically waters plants based on soil moisture levels and environmental conditions.",
+            tags: ["Java", "I2C", "IoT"]
           },
           {
-            title: "Interactive Interfaces",
-            desc: "Building WebGL and canvas-based interactions that are highly performant and visually stunning.",
-            tags: ["three.js", "webgl", "framer"]
+            title: "Pantry App",
+            desc: "A web application that allows users to manage their pantry inventory, track expiration dates, and receive notifications for low-stock items.",
+            tags: ["Next.JS", "Stripe", "Supabase"]
           },
           {
-            title: "AI Integration",
-            desc: "Connecting language models into production pipelines, building agentic systems that can read, reason, and execute.",
-            tags: ["openai", "agents", "python"]
+            title: "WUWA Builds",
+            desc: "A database website that stores all of my current WUWA builds, including their specific stats, weapons, and echoes for each resonator.",
+            tags: ["NEXT.js", "SUPABASE", "python"]
           }
         ].map((item, i) => (
           <div key={i} className="bg-ink-0 p-10 group cursor-pointer transition-colors hover:bg-ink-1">
