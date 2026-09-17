@@ -77,6 +77,6 @@ export async function getPostBySlug(rawSlug: string) {
       date: (page as any).properties.Date?.date?.start || "",
       summary: (page as any).properties.Summary?.rich_text[0]?.plain_text || "",
     },
-    markdown: mdString.parent || mdString,
+    markdown: typeof mdString === "string" ? mdString : (mdString.parent || ""),
   };
 }
