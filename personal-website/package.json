@@ -20,6 +20,7 @@
     "notion-to-md": "^3.1.9",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-github-calendar": "^5.0.9",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "three": "^0.186.0"
@@ -33,5 +34,8 @@
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
     "typescript": "^5.9.3"
+  },
+  "allowScripts": {
+    "unrs-resolver@1.12.2": true
   }
 }
