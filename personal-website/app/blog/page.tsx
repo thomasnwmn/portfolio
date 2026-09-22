@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { getPosts } from "@/lib/notion";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Writing · Thomas Newman" };
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -7,19 +10,15 @@ export default async function Blog() {
   const posts = await getPosts();
 
   return (
-    <div className="mx-auto max-w-7xl px-6 md:px-10 py-24">
-      <h1 className="text-3xl font-semibold tracking-tight text-paper-0 mb-8">Writing</h1>
+    <div className="page-shell">
+      <p className="eyebrow mb-7">Writing / Engineering notes</p>
+      <h1 className="page-title mb-8">Thinking through<br />the system.</h1>
+      <p className="mb-12 max-w-xl leading-relaxed text-paper-1">Notes on computer engineering, hardware, software, and the lessons in between.</p>
       
-      {!process.env.NOTION_DATABASE_ID && (
-        <div className="mb-8 p-4 border border-chrome-mid bg-ink-1 rounded-sm text-paper-1">
-          <p className="font-semibold text-paper-0 mb-2">Setup Required</p>
-          <p>Please add your NOTION_TOKEN and NOTION_DATABASE_ID to your .env.local file to see your posts here.</p>
-        </div>
-      )}
 
       <div className="flex flex-col border-t border-hairline">
-        {posts.length === 0 && process.env.NOTION_DATABASE_ID && (
-          <p className="py-6 text-paper-2">No posts published yet.</p>
+        {posts.length === 0 && (
+          <div className="py-12"><p className="text-paper-1">Notes are on the way. In the meantime, explore what I’m building.</p><Link href="/work" className="button-secondary mt-6">Explore my work ↗</Link></div>
         )}
         
         {posts.map((post) => (

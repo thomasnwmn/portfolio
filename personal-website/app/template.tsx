@@ -1,16 +1,19 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { ViewTransition } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Template({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 10 }}
-      transition={{ ease: "easeOut", duration: 0.4 }}
+    <ViewTransition
+      key={pathname}
+      enter={{ "project-open": "project-open", "project-back": "project-back", default: "page-enter" }}
+      exit={{ "project-open": "project-open", "project-back": "project-back", default: "page-exit" }}
+      default="none"
     >
-      {children}
-    </motion.div>
+      <div className="route-content">{children}</div>
+    </ViewTransition>
   );
 }

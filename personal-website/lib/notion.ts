@@ -1,4 +1,5 @@
-import { Client } from "@notionhq/client";
+import { Client, isFullPage } from "@notionhq/client";
+import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { NotionToMarkdown } from "notion-to-md";
 
 export const notion = new Client({
@@ -14,6 +15,17 @@ export type Post = {
   date: string;
   summary: string;
 };
+
+function toPost(page: PageObjectResponse): Post {
+  const { Title, Slug, Date: date, Summary } = page.properties;
+  return {
+    id: page.id,
+    title: Title?.type === "title" ? Title.title.map(part => part.plain_text).join("") || "Untitled" : "Untitled",
+    slug: Slug?.type === "rich_text" ? Slug.rich_text.map(part => part.plain_text).join("") || page.id : page.id,
+    date: date?.type === "date" ? date.date?.start || "" : "",
+    summary: Summary?.type === "rich_text" ? Summary.rich_text.map(part => part.plain_text).join("") : "",
+  };
+}
 
 export async function getPosts(): Promise<Post[]> {
   const databaseId = process.env.NOTION_DATABASE_ID;
@@ -35,30 +47,22 @@ export async function getPosts(): Promise<Post[]> {
     ],
   });
 
-  return response.results.map((page: any) => {
-    return {
-      id: page.id,
-      title: page.properties.Title?.title[0]?.plain_text || "Untitled",
-      slug: page.properties.Slug?.rich_text[0]?.plain_text || page.id,
-      date: page.properties.Date?.date?.start || "",
-      summary: page.properties.Summary?.rich_text[0]?.plain_text || "",
-    };
-  });
+  return response.results.filter(isFullPage).map(toPost);
 }
 
 export async function getPostBySlug(rawSlug: string) {
   const databaseId = process.env.NOTION_DATABASE_ID;
   if (!databaseId) return null;
 
-  const slug = decodeURIComponent(rawSlug);
+  const slug = rawSlug;
 
   const response = await notion.databases.query({
     database_id: databaseId,
     filter: {
-      property: "Slug",
-      rich_text: {
-        equals: slug,
-      },
+      and: [
+        { property: "Slug", rich_text: { equals: slug } },
+        { property: "Published", checkbox: { equals: true } },
+      ],
     },
   });
 
@@ -67,16 +71,12 @@ export async function getPostBySlug(rawSlug: string) {
   }
 
   const page = response.results[0];
+  if (!isFullPage(page)) return null;
   const mdBlocks = await n2m.pageToMarkdown(page.id);
   const mdString = n2m.toMarkdownString(mdBlocks);
 
   return {
-    post: {
-      id: page.id,
-      title: (page as any).properties.Title?.title[0]?.plain_text || "Untitled",
-      date: (page as any).properties.Date?.date?.start || "",
-      summary: (page as any).properties.Summary?.rich_text[0]?.plain_text || "",
-    },
+    post: toPost(page),
     markdown: typeof mdString === "string" ? mdString : (mdString.parent || ""),
   };
 }

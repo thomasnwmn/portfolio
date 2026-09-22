@@ -1,19 +1,20 @@
 /* eslint-disable react-hooks/purity */
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect, useSyncExternalStore } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 // Track global mouse to bypass DOM pointer-event blocking
 // We define it outside so it's shared efficiently across all particle meshes
 const globalMouse = { x: 0, y: 0 };
-if (typeof window !== "undefined") {
-  window.addEventListener("pointermove", (e) => {
-    globalMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    globalMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  });
+function subscribeMotion(onChange: () => void) {
+  const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
 }
+const getReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const getServerMotion = () => true;
 
 function FluidParticles({ count, size }: { count: number; size: number }) {
   const pointsRef = useRef<THREE.Points>(null);
@@ -73,8 +74,6 @@ function FluidParticles({ count, size }: { count: number; size: number }) {
       const origY = initialPositions[i3 + 1];
       const origZ = initialPositions[i3 + 2];
 
-      const distToCenter = Math.sqrt(origX * origX + origY * origY + origZ * origZ);
-
       // Extremely slow, organic wave motion
       const waveX = Math.sin(time * 0.15 + origY + phases[i]) * 0.3;
       const waveY = Math.cos(time * 0.2 + origX + phases[i]) * 0.3;
@@ -89,7 +88,7 @@ function FluidParticles({ count, size }: { count: number; size: number }) {
 
       let targetX = Math.cos(newAngle) * startDist + waveX;
       let targetY = Math.sin(newAngle) * startDist + waveY;
-      let targetZ = origZ + waveZ;
+      const targetZ = origZ + waveZ;
 
       // Visual exclusion zone to keep the hole perfectly circular and empty from the camera's perspective
       const currentDistToCenter = Math.sqrt(targetX * targetX + targetY * targetY);
@@ -105,7 +104,7 @@ function FluidParticles({ count, size }: { count: number; size: number }) {
       const dist = Math.sqrt(dx * dx + dy * dy);
       
       // Gentle repulsion effect (push apart slightly)
-      if (dist < 6) {
+      if (dist > 0 && dist < 6) {
         const force = Math.pow((6 - dist) / 6, 2);
         targetX += (dx / dist) * force * 1.6;
         targetY += (dy / dist) * force * 1.6;
@@ -145,16 +144,27 @@ function FluidParticles({ count, size }: { count: number; size: number }) {
 }
 
 export default function ParticleBackground() {
+  const reducedMotion = useSyncExternalStore(subscribeMotion, getReducedMotion, getServerMotion);
+  useEffect(() => {
+    if (reducedMotion) return;
+    const onPointerMove = (event: PointerEvent) => {
+      globalMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      globalMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onPointerMove);
+  }, [reducedMotion]);
+
   return (
-    <div className="absolute inset-0 z-0 bg-ink-0 pointer-events-none">
-      <Canvas camera={{ position: [0, 0, 12.5], fov: 60 }}>
+    <div aria-hidden="true" className="absolute inset-0 z-0 bg-ink-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(ellipse at 75% 50%, #1d2528 0%, transparent 60%)" }}>
+      {!reducedMotion && <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 12.5], fov: 60 }}>
         {/* 60% default size (0.06) */}
-        <FluidParticles count={30000} size={0.06} />
+        <FluidParticles count={9000} size={0.06} />
         {/* 20% large size (1.5x default = 0.09) */}
-        <FluidParticles count={10000} size={0.09} />
+        <FluidParticles count={3000} size={0.09} />
         {/* 20% small size (0.5x default = 0.03) */}
-        <FluidParticles count={10000} size={0.03} />
-      </Canvas>
+        <FluidParticles count={3000} size={0.03} />
+      </Canvas>}
     </div>
   );
 }

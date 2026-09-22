@@ -14,10 +14,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Thomas Newman",
-  description: "Experienced Computer Engineer specializing in RISC-V, Embedded Systems, and Hardware Architecture. Passionate about building efficient and reliable systems.",
+  description: "Computer engineering student building across hardware and software: RISC-V, embedded control, sensing, systems programming, and full-stack applications.",
+  
 };
 
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -25,9 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-svh flex flex-col">
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main id="main" tabIndex={-1} className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );
