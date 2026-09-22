@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
+import RepositoryBrowserLoader from "@/components/RepositoryBrowserLoader";
 import ProjectVisual from "@/components/ProjectVisual";
 import { getProject, projects } from "@/lib/projects";
 
@@ -30,6 +31,10 @@ export default async function ProjectPage({ params }: Props) {
       <section className="detail-section"><p className="eyebrow">01 / Overview</p><div><h2 className="mb-5 text-3xl font-medium tracking-tight">The system.</h2><p className="text-lg leading-relaxed text-paper-1">{project.overview}</p></div></section>
       <section className="detail-section"><p className="eyebrow">02 / Engineering focus</p><div className="space-y-9">{project.focus.map((item,i) => <div key={item.title} className="border-t border-hairline pt-6"><span className="eyebrow">0{i+1}</span><h2 className="mb-3 mt-3 text-xl font-medium">{item.title}</h2><p className="leading-relaxed text-paper-1">{item.description}</p></div>)}</div></section>
       <section className="detail-section"><p className="eyebrow">03 / System at a glance</p><div><ol className="system-flow">{project.flow.map((step,i) => <li key={step}><span className="eyebrow">0{i+1}</span><span>{step}</span>{i < 2 && <span className="flow-arrow" aria-hidden="true">→</span>}</li>)}</ol><p className="mt-4 text-xs text-paper-2">Conceptual flow · The key layers of the project.</p></div></section>
+      {project.repositoryBrowser && <section className="mt-16" aria-label="Project repository">
+        <div className="section-rule"><div><p className="eyebrow">04 / Repository</p><h2 className="mt-3 text-2xl font-medium tracking-tight">Explore the source.</h2></div><a className="text-link" href={project.repositoryBrowser.url} target="_blank" rel="noreferrer">Open on GitHub ↗</a></div>
+        <RepositoryBrowserLoader slug={project.slug} config={project.repositoryBrowser} />
+      </section>}
       <nav aria-label="More projects" className="project-pagination"><Link href={`/work/${previous.slug}`} transitionTypes={["project-back"]}><span className="eyebrow">← Previous project</span><span className="mt-3 block text-xl">{previous.title}</span></Link><Link href={`/work/${next.slug}`} transitionTypes={["project-open"]}><span className="eyebrow">Next project →</span><span className="mt-3 block text-xl">{next.title}</span></Link></nav>
     </div>
   );

@@ -11,6 +11,8 @@ export type Project = {
   overview: string;
   focus: { title: string; description: string }[];
   flow: [string, string, string];
+  // Omit to disable the widget and all repository requests.
+  repositoryBrowser?: { url: string; branch?: string; rootPath?: string };
   sourceUrl?: string;
   liveUrl?: string;
 };
@@ -65,6 +67,7 @@ export const projects: Project[] = [
       { title: "Application and storage", description: "Next.js handles the UI, while Supabase provides reliable backend storage for all the game data." },
       { title: "A usable reference", description: "It turns messy screenshots and spreadsheets into a browsable database that's easy to share." },
     ], flow: ["Resonator / gear", "Supabase storage", "Next.js interface"],
+    repositoryBrowser: { url: "https://github.com/thomasnwmn/wuwabuilds" },
     sourceUrl: "https://github.com/thomasnwmn/wuwabuilds", liveUrl: "https://wuwa.thomasnewman.ca",
   },
   {
