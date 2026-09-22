@@ -50,33 +50,23 @@ export async function getPosts(): Promise<Post[]> {
   return response.results.filter(isFullPage).map(toPost);
 }
 
-export async function getPostBySlug(rawSlug: string) {
+export async function getPostBySlug(slug: string) {
   const databaseId = process.env.NOTION_DATABASE_ID;
   if (!databaseId) return null;
 
-  const slug = rawSlug;
+  // Fetch all published posts to use the exact same slug matching logic
+  const posts = await getPosts();
+  const postInfo = posts.find((p) => p.slug === slug);
 
-  const response = await notion.databases.query({
-    database_id: databaseId,
-    filter: {
-      and: [
-        { property: "Slug", rich_text: { equals: slug } },
-        { property: "Published", checkbox: { equals: true } },
-      ],
-    },
-  });
-
-  if (response.results.length === 0) {
+  if (!postInfo) {
     return null;
   }
 
-  const page = response.results[0];
-  if (!isFullPage(page)) return null;
-  const mdBlocks = await n2m.pageToMarkdown(page.id);
+  const mdBlocks = await n2m.pageToMarkdown(postInfo.id);
   const mdString = n2m.toMarkdownString(mdBlocks);
 
   return {
-    post: toPost(page),
+    post: postInfo,
     markdown: typeof mdString === "string" ? mdString : (mdString.parent || ""),
   };
 }
