@@ -8,7 +8,8 @@ export const revalidate = 60;
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const data = await getPostBySlug(slug);
+  const decodedSlug = decodeURIComponent(slug);
+  const data = await getPostBySlug(decodedSlug);
 
   if (!data) {
     notFound();
