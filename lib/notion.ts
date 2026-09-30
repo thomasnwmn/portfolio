@@ -1,6 +1,7 @@
 import { Client, isFullPage } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { NotionToMarkdown } from "notion-to-md";
+import { connection } from "next/server";
 
 export const notion = new Client({
   auth: process.env.NOTION_TOKEN,
@@ -16,6 +17,11 @@ export type Post = {
   summary: string;
 };
 
+function isPublished(page: PageObjectResponse): boolean {
+  const published = page.properties.Published;
+  return !page.archived && !page.in_trash && published?.type === "checkbox" && published.checkbox === true;
+}
+
 function toPost(page: PageObjectResponse): Post {
   const { Title, Slug, Date: date, Summary } = page.properties;
   return {
@@ -28,6 +34,8 @@ function toPost(page: PageObjectResponse): Post {
 }
 
 export async function getPosts(): Promise<Post[]> {
+  // Publication state must be checked at request time, never from an ISR page.
+  await connection();
   const databaseId = process.env.NOTION_DATABASE_ID;
   if (!databaseId) return [];
 
@@ -47,7 +55,7 @@ export async function getPosts(): Promise<Post[]> {
     ],
   });
 
-  return response.results.filter(isFullPage).map(toPost);
+  return response.results.filter(isFullPage).filter(isPublished).map(toPost);
 }
 
 export async function getPostBySlug(slug: string) {
@@ -61,6 +69,11 @@ export async function getPostBySlug(slug: string) {
   if (!postInfo) {
     return null;
   }
+
+  // Confirm the page itself is still published before loading its body.
+  // A database query can lag behind a just-updated checkbox.
+  const page = await notion.pages.retrieve({ page_id: postInfo.id });
+  if (!isFullPage(page) || !isPublished(page)) return null;
 
   const mdBlocks = await n2m.pageToMarkdown(postInfo.id);
   const mdString = n2m.toMarkdownString(mdBlocks);

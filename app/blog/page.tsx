@@ -4,8 +4,6 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Writing · Thomas Newman" };
 
-export const revalidate = 60; // Revalidate every 60 seconds
-
 export default async function Blog() {
   const posts = await getPosts();
 
