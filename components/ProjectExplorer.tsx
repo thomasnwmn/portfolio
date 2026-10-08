@@ -2,12 +2,11 @@
 
 import { startTransition, ViewTransition } from "react";
 import { useSearchParams } from "next/navigation";
-import { projects } from "@/lib/projects";
+import type { Project } from "@/lib/projects";
 import ProjectCard from "./ProjectCard";
 
-const categories = ["All projects", "Embedded systems", "Software"] as const;
-
-export default function ProjectExplorer() {
+export default function ProjectExplorer({ projects }: { projects: Project[] }) {
+  const categories = ["All projects", ...new Set(projects.map(project => project.category))];
   const searchParams = useSearchParams();
   const requestedCategory = searchParams.get("category");
   const category = categories.find(item => item === requestedCategory) ?? "All projects";

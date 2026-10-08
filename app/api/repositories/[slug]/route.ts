@@ -1,7 +1,7 @@
 import { getProject } from "@/lib/projects";
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
-  const config = getProject((await params).slug)?.repositoryBrowser;
+  const config = (await getProject((await params).slug))?.repositoryBrowser;
   if (!config) return Response.json({ error: "Repository browser is not enabled." }, { status: 404 });
   const repository = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/?$/.exec(config.url);
   if (!repository) return Response.json({ error: "Invalid repository configuration." }, { status: 500 });

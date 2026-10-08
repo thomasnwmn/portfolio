@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Contact · Thomas Newman" };
 
 export default async function Contact({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { project: slug } = await searchParams;
-  const project = slug ? getProject(slug) : undefined;
+  const project = slug ? await getProject(slug) : undefined;
   const emailHref = `mailto:tnewman057@gmail.com${project ? `?subject=${encodeURIComponent(`Let’s talk about ${project.title}`)}` : ""}`;
   return (
     <div className="page-shell">
