@@ -19,7 +19,7 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
           <p className="text-paper-1 text-lg leading-relaxed mb-12">
             For opportunities or collaborations, please reach me directly.
           </p>
-          {project && <p className="mb-8 text-sm text-paper-1">Regarding <span className="text-paper-0">{project.title}</span> — the email link below includes the project in its subject.</p>}
+          {project && <p className="mb-8 text-sm text-paper-1">Regarding <span className="text-paper-0">{project.title}</span> - the email link below includes the project in its subject.</p>}
           
           <div className="grid gap-px bg-hairline">
             <a href={emailHref} className="bg-ink-0 p-6 group transition-colors hover:bg-ink-1 no-underline break-words">
@@ -27,17 +27,17 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
               <p className="text-paper-0 font-medium text-lg mb-1 group-hover:text-chrome-hi transition-colors">tnewman057@gmail.com</p>
               <p className="text-paper-1 text-sm">My inbox.</p>
             </a>
-            <a href="https://linkedin.com/in/thomasnewmanbeng/" target="_blank" rel="noopener noreferrer" className="bg-ink-0 p-8 group transition-colors hover:bg-ink-1 no-underline">
+            <a href="https://linkedin.com/in/thomasnewmanbeng/" className="bg-ink-0 p-6 group transition-colors hover:bg-ink-1 no-underline break-words">
               <p className="font-mono text-[11px] text-paper-2 mb-3">LINKEDIN</p>
               <p className="text-paper-0 font-medium text-lg mb-1 group-hover:text-chrome-hi transition-colors">Thomas Newman</p>
               <p className="text-paper-1 text-sm">Professional network & history.</p>
             </a>
-            <a href="https://x.com/nots_uddenly" target="_blank" rel="noopener noreferrer" className="bg-ink-0 p-8 group transition-colors hover:bg-ink-1 no-underline">
+            <a href="https://x.com/nots_uddenly" className="bg-ink-0 p-6 group transition-colors hover:bg-ink-1 no-underline break-words">
               <p className="font-mono text-[11px] text-paper-2 mb-3">X/TWITTER</p>
-              <p className="text-paper-0 font-medium text-lg mb-1 group-hover:text-chrome-hi transition-colors">Thomas Newman</p>
+              <p className="text-paper-0 font-medium text-lg mb-1 group-hover:text-chrome-hi transition-colors">nots_uddenly</p>
               <p className="text-paper-1 text-sm">Social media & updates.</p>
             </a>
-            <a href="https://github.com/thomasnwmn" target="_blank" rel="noopener noreferrer" className="bg-ink-0 p-8 group transition-colors hover:bg-ink-1 no-underline">
+            <a href="https://github.com/thomasnwmn" target="_blank" rel="noopener noreferrer" className="bg-ink-0 p-6 group transition-colors hover:bg-ink-1 no-underline break-words">
               <p className="font-mono text-[11px] text-paper-2 mb-3">GITHUB</p>
               <p className="text-paper-0 font-medium text-lg mb-1 group-hover:text-chrome-hi transition-colors">thomasnwmn</p>
               <p className="text-paper-1 text-sm">Projects & contributions.</p>
