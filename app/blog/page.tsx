@@ -9,9 +9,8 @@ export default async function Blog() {
 
   return (
     <div className="page-shell">
-      <p className="eyebrow mb-7">Writing / Engineering notes</p>
-      <h1 className="page-title mb-8">Thinking through<br />the system.</h1>
-      <p className="mb-12 max-w-xl leading-relaxed text-paper-1">Notes on computer engineering, hardware, software, and the lessons in between.</p>
+      <h1 className="page-title mb-8">The <span className="text-chrome-hi/60">Blog.</span></h1>
+      <p className="mb-12 max-w-xl leading-relaxed text-paper-1">See my latest updates on engineering and technology.</p>
       
 
       <div className="flex flex-col border-t border-hairline">

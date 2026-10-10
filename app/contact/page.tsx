@@ -13,14 +13,11 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
     <div className="page-shell">
       <div className="grid md:grid-cols-2 gap-16">
         <div>
-          <p className="font-mono text-[13px] text-chrome-mid mb-6 tracking-wider uppercase">
-            COMMUNICATION PROTOCOL
-          </p>
           <h1 className="page-title mb-8">
-            Let’s connect.
+            Let’s <span className="text-chrome-hi/60">connect.</span>
           </h1>
           <p className="text-paper-1 text-lg leading-relaxed mb-12">
-            For engineering opportunities, project collaborations, or a conversation about embedded systems and software, reach me directly.
+            For opportunities or collaborations, please reach me directly.
           </p>
           {project && <p className="mb-8 text-sm text-paper-1">Regarding <span className="text-paper-0">{project.title}</span> — the email link below includes the project in its subject.</p>}
           
@@ -28,7 +25,7 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
             <a href={emailHref} className="bg-ink-0 p-6 group transition-colors hover:bg-ink-1 no-underline break-words">
               <p className="font-mono text-[11px] text-paper-2 mb-3">EMAIL</p>
               <p className="text-paper-0 font-medium text-lg mb-1 group-hover:text-chrome-hi transition-colors">tnewman057@gmail.com</p>
-              <p className="text-paper-1 text-sm">Direct inbox. Read by me.</p>
+              <p className="text-paper-1 text-sm">My inbox.</p>
             </a>
             <a href="https://linkedin.com/in/thomasnewmanbeng/" target="_blank" rel="noopener noreferrer" className="bg-ink-0 p-8 group transition-colors hover:bg-ink-1 no-underline">
               <p className="font-mono text-[11px] text-paper-2 mb-3">LINKEDIN</p>

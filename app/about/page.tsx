@@ -10,8 +10,7 @@ export default function About() {
     <div className="page-shell">
       <div className="grid md:grid-cols-2 gap-16">
         <div>
-          <p className="eyebrow mb-7">About / The engineer</p>
-          <h1 className="page-title mb-8">Curious at<br />every layer.</h1>
+          <h1 className="page-title mb-8">About <span className="text-chrome-hi/60">Me</span></h1>
           <div className="text-paper-1 space-y-6 leading-relaxed">
             <p>
               I am currently a third-year Computer Engineering student at the Lassonde School of Engineering at York University with a passion for RISC-V and system design.  I have experience in a variety of programming languages, including Python, C/C++, Java, Typescript.
