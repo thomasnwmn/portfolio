@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import RepositoryBrowserLoader from "@/components/RepositoryBrowserLoader";
 import ProjectVisual from "@/components/ProjectVisual";
 import SystemFlow, { parseFlow } from "@/components/SystemFlow";
@@ -82,7 +83,11 @@ export default async function ProjectPage({ params }: Props) {
         <article className="project-body prose prose-invert max-w-none prose-p:text-paper-1 prose-li:text-paper-1 prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-paper-0 prose-a:text-paper-0 prose-a:underline-offset-4 prose-strong:text-paper-0 prose-code:text-paper-0 prose-code:before:content-none prose-code:after:content-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
             components={{
+              details({ node, className, ...props }) {
+                return <details className={`notion-toggle ${className || ""}`} {...props} />;
+              },
               code({ className, children, ...props }) {
                 const content = String(children).trim();
                 if (className === "language-flow" || content.startsWith("flow:")) {

@@ -17,6 +17,30 @@ export type Post = {
   summary: string;
 };
 
+export function fixToggleBlocks(blocks: any[]): any[] {
+  for (const block of blocks) {
+    if (block.children && block.children.length > 0) {
+      if (block.type && typeof block.type === "string" && block.type.startsWith("heading_")) {
+        const level = block.type.replace("heading_", "") || "2";
+        const cleanTitle = (block.parent || "").replace(/^#{1,6}\s+/, "").trim();
+        block.type = "toggle";
+        block.parent = `<h${level}>${cleanTitle}</h${level}>`;
+      }
+      fixToggleBlocks(block.children);
+    }
+  }
+  return blocks;
+}
+
+export function normalizeNotionMarkdown(md: string): string {
+  if (!md) return "";
+  return md
+    .replace(/<details[^>]*>\s*<summary>([\s\S]*?)<\/summary>\s*/g, (match, title) => {
+      return `<details class="notion-toggle">\n<summary>${title.trim()}</summary>\n\n`;
+    })
+    .replace(/<\/details>/g, "\n\n</details>\n\n");
+}
+
 function isPublished(page: PageObjectResponse): boolean {
   const published = page.properties.Published;
   return !page.archived && !page.in_trash && published?.type === "checkbox" && published.checkbox === true;
@@ -76,10 +100,11 @@ export async function getPostBySlug(slug: string) {
   if (!isFullPage(page) || !isPublished(page)) return null;
 
   const mdBlocks = await n2m.pageToMarkdown(postInfo.id);
+  fixToggleBlocks(mdBlocks);
   const mdString = n2m.toMarkdownString(mdBlocks);
 
   return {
     post: postInfo,
-    markdown: typeof mdString === "string" ? mdString : (mdString.parent || ""),
+    markdown: normalizeNotionMarkdown(typeof mdString === "string" ? mdString : (mdString.parent || "")),
   };
 }

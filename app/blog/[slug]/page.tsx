@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -30,7 +31,15 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
       </div>
 
       <article className="prose prose-invert prose-p:text-paper-1 prose-headings:text-paper-0 prose-a:text-paper-0 prose-a:underline-offset-4 hover:prose-a:text-chrome-mid prose-strong:text-paper-0 max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            details({ node, className, ...props }) {
+              return <details className={`notion-toggle ${className || ""}`} {...props} />;
+            },
+          }}
+        >
           {markdown}
         </ReactMarkdown>
       </article>
