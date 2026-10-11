@@ -137,10 +137,10 @@ body > header, body > footer { flex-shrink: 0; }
 .notion-callout-body > * + * { margin-top: 10px; }
 .notion-callout strong { color: var(--paper-0); }
 .notion-toggle { margin: 1.5rem 0; }
-.notion-toggle summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; padding: 6px 0; color: var(--paper-0); font-weight: 500; user-select: none; transition: opacity 150ms ease; }
+.notion-toggle summary { display: flex; align-items: center; gap: 12px; cursor: pointer; list-style: none; padding: 8px 0; color: var(--paper-0); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; user-select: none; transition: opacity 150ms ease; }
 .notion-toggle summary:hover { opacity: 0.9; }
 .notion-toggle summary::-webkit-details-marker, .notion-toggle summary::marker { display: none; }
-.notion-toggle summary::before { content: ""; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background-color: rgba(255, 255, 255, 0.08); flex-shrink: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='%23e9ebef'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; transition: transform 180ms ease, background-color 150ms ease; }
+.notion-toggle summary::before { content: ""; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 5px; background-color: rgba(255, 255, 255, 0.08); flex-shrink: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='%23e9ebef'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; transition: transform 180ms ease, background-color 150ms ease; }
 .notion-toggle summary:hover::before { background-color: rgba(255, 255, 255, 0.16); }
 .notion-toggle[open] summary::before { transform: rotate(90deg); }
 .notion-toggle summary > :is(h1,h2,h3,h4) { margin: 0 !important; font-weight: 600 !important; letter-spacing: -0.02em !important; line-height: 1.25 !important; }

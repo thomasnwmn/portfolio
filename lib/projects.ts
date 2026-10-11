@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { isFullPage } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
-import { notion, n2m, normalizeNotionMarkdown, fixToggleBlocks } from "./notion";
+import { notion, n2m, normalizeNotionMarkdown, fixToggleBlocks, formatLastEdited } from "./notion";
 
 export type Project = {
   id: string;
@@ -16,6 +16,7 @@ export type Project = {
   repositoryBrowser?: { url: string; branch?: string; rootPath?: string };
   sourceUrl?: string;
   liveUrl?: string;
+  lastEditedTime: string;
 };
 
 // Revalidate project data from Notion
@@ -70,8 +71,11 @@ function toProject(page: PageObjectResponse, index: number): Project {
     } : undefined,
     sourceUrl: url(properties, "Source URL"),
     liveUrl: url(properties, "Live URL"),
+    lastEditedTime: page.last_edited_time,
   };
 }
+
+export { formatLastEdited };
 
 async function queryProjects(): Promise<Project[]> {
   const databaseId = projectsDatabaseId();

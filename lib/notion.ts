@@ -15,7 +15,31 @@ export type Post = {
   slug: string;
   date: string;
   summary: string;
+  lastEditedTime: string;
 };
+
+export function formatLastEdited(dateString?: string): string {
+  if (!dateString) return "";
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "";
+    const datePart = new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "America/Toronto",
+    }).format(d);
+    const timePart = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+      timeZone: "America/Toronto",
+    }).format(d);
+    return `Last edited on ${datePart} at ${timePart}`;
+  } catch {
+    return "";
+  }
+}
 
 export function fixToggleBlocks(blocks: any[]): any[] {
   for (const block of blocks) {
@@ -54,6 +78,7 @@ function toPost(page: PageObjectResponse): Post {
     slug: Slug?.type === "rich_text" ? Slug.rich_text.map(part => part.plain_text).join("") || page.id : page.id,
     date: date?.type === "date" ? date.date?.start || "" : "",
     summary: Summary?.type === "rich_text" ? Summary.rich_text.map(part => part.plain_text).join("") : "",
+    lastEditedTime: page.last_edited_time,
   };
 }
 

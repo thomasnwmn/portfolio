@@ -8,7 +8,7 @@ import rehypeRaw from "rehype-raw";
 import RepositoryBrowserLoader from "@/components/RepositoryBrowserLoader";
 import ProjectVisual from "@/components/ProjectVisual";
 import SystemFlow, { parseFlow } from "@/components/SystemFlow";
-import { getProject, getProjectContent, getProjects } from "@/lib/projects";
+import { getProject, getProjectContent, getProjects, formatLastEdited } from "@/lib/projects";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -137,6 +137,14 @@ export default async function ProjectPage({ params }: Props) {
           </div>
           <RepositoryBrowserLoader slug={project.slug} config={project.repositoryBrowser} />
         </section>
+      )}
+
+      {project.lastEditedTime && (
+        <div className="mt-16 pt-6 border-t border-hairline">
+          <p className="text-[13px] text-paper-2">
+            {formatLastEdited(project.lastEditedTime)}
+          </p>
+        </div>
       )}
 
       {allProjects.length > 1 && (

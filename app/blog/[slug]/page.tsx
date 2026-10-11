@@ -1,4 +1,4 @@
-import { getPostBySlug } from "@/lib/notion";
+import { getPostBySlug, formatLastEdited } from "@/lib/notion";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -43,6 +43,14 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
           {markdown}
         </ReactMarkdown>
       </article>
+
+      {post.lastEditedTime && (
+        <div className="mt-16 pt-6 border-t border-hairline">
+          <p className="text-[13px] text-paper-2">
+            {formatLastEdited(post.lastEditedTime)}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
