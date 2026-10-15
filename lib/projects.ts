@@ -1,7 +1,7 @@
-import { unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { isFullPage } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
-import { notion, n2m, normalizeNotionMarkdown, fixToggleBlocks, formatLastEdited } from "./notion";
+import { notion, pageMarkdown, formatLastEdited } from "./notion";
 
 export type Project = {
   id: string;
@@ -18,9 +18,6 @@ export type Project = {
   liveUrl?: string;
   lastEditedTime: string;
 };
-
-// Revalidate project data from Notion
-export const PROJECTS_REVALIDATE = 60;
 
 type Properties = PageObjectResponse["properties"];
 
@@ -77,7 +74,12 @@ function toProject(page: PageObjectResponse, index: number): Project {
 
 export { formatLastEdited };
 
-async function queryProjects(): Promise<Project[]> {
+// Lifetime comes from the "content" profile in next.config.ts; /api/revalidate
+// can expire the "projects" tag on demand.
+export async function getProjects(): Promise<Project[]> {
+  "use cache";
+  cacheLife("content");
+  cacheTag("projects");
   const databaseId = projectsDatabaseId();
   if (!databaseId) return [];
 
@@ -103,41 +105,21 @@ async function queryProjects(): Promise<Project[]> {
   }
 }
 
-export const getProjects = unstable_cache(queryProjects, ["notion-projects"], { revalidate: PROJECTS_REVALIDATE, tags: ["projects"] });
-
 export async function getProject(slug: string) {
   return (await getProjects()).find(project => project.slug === slug);
 }
 
-async function fetchProjectMarkdown(pageId: string): Promise<string> {
-  const databaseId = projectsDatabaseId();
-  if (!databaseId) return "";
-  try {
-    const mdBlocks = await n2m.pageToMarkdown(pageId);
-    fixToggleBlocks(mdBlocks);
-    const mdString = n2m.toMarkdownString(mdBlocks);
-    return typeof mdString === "string" ? mdString : (mdString.parent || "");
-  } catch {
-    return "";
-  }
-}
-
-const getCachedProjectMarkdown = unstable_cache(fetchProjectMarkdown, ["notion-project-md"], { revalidate: PROJECTS_REVALIDATE, tags: ["projects"] });
-
 export async function getProjectContent(slug: string) {
+  "use cache";
+  cacheLife("content");
+  cacheTag("projects");
   const project = await getProject(slug);
   if (!project) return null;
-  const databaseId = projectsDatabaseId();
   let markdown = "";
-  if (databaseId && project.id) {
-    try {
-      const liveMd = await getCachedProjectMarkdown(project.id);
-      if (liveMd.trim()) {
-        markdown = liveMd;
-      }
-    } catch {
-      markdown = "";
-    }
+  try {
+    markdown = await pageMarkdown(project.id);
+  } catch (error) {
+    console.warn(`Could not load Notion content for project "${slug}":`, error);
   }
-  return { project, markdown: normalizeNotionMarkdown(markdown) };
+  return { project, markdown };
 }
