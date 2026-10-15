@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, NotebookPen } from "lucide-react";
+import { EmptyState } from "@/components/arc/empty-state/empty-state";
 import { getPosts } from "@/lib/notion";
 import PostCard from "@/components/PostCard";
 import type { Metadata } from "next";
@@ -17,10 +18,13 @@ export default async function Blog() {
       </div>
 
       {posts.length === 0 ? (
-        <div className="empty-state">
-          <p className="text-paper-1">Notes are on the way. In the meantime, explore what I’m building.</p>
-          <Link href="/work" className="button-secondary mt-6">Explore my work <ArrowUpRight size={14} aria-hidden="true" /></Link>
-        </div>
+        <EmptyState
+          className="border-t border-hairline"
+          icon={<NotebookPen size={24} strokeWidth={1.75} />}
+          title="No posts yet"
+          description="Notes are on the way. In the meantime, explore what I’m building."
+          action={<Link href="/work" className="button-secondary">Explore my work <ArrowUpRight size={16} strokeWidth={1.75} aria-hidden="true" /></Link>}
+        />
       ) : (
         <div className="post-grid">
           {posts.map((post, index) => <PostCard key={post.id} post={post} index={index} featured={index === 0} />)}

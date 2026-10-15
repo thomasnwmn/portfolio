@@ -1,44 +1,38 @@
 "use client";
 
 import type { Project } from "@/lib/projects";
-import { useEffect, useRef, useState } from "react";
-import { ChevronRight, FileCode2, Folder } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowUpRight } from "lucide-react";
+import { Alert } from "./arc/alert/alert";
+import { Button } from "./arc/button/button";
+import { CodeBlock } from "./arc/code-block/code-block";
+import { ScrollArea } from "./arc/scroll-area/scroll-area";
+import { TreeView, type TreeNode } from "./arc/tree-view/tree-view";
 
 type Entry = { name: string; path: string; type: "directory" | "file" };
 type Result = { type: "directory"; entries: Entry[]; truncated: boolean } | { type: "file"; content: string } | { type: "unsupported"; message: string };
 type Read = (path: string) => Promise<Result>;
+type Folder = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; entries: Entry[]; truncated: boolean };
 
-function Directory({ path, read, selected, onSelect }: { path: string; read: Read; selected: string | null; onSelect: (path: string) => void }) {
-  const [data, setData] = useState<Extract<Result, { type: "directory" }> | null>(null);
-  const [error, setError] = useState("");
-  const [attempt, setAttempt] = useState(0);
-  const [open, setOpen] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    let active = true;
-    read(path).then(result => {
-      if (result.type !== "directory") throw new Error("Could not load this folder.");
-      if (active) setData(result);
-    }).catch(reason => { if (active) setError(reason.message); });
-    return () => { active = false; };
-  }, [path, read, attempt]);
-  if (error) return <div role="alert" className="p-3 text-xs text-paper-1">{error} <button className="underline" onClick={() => { setError(""); setAttempt(a => a + 1); }}>Retry</button></div>;
-  if (!data) return <p role="status" className="p-3 text-xs text-paper-2">Loading files…</p>;
-  return <ul className="space-y-1">
-    {data.entries.map(entry => <li key={entry.path}>
-      <button className={`flex w-full items-center gap-2 rounded px-2 py-2 text-left text-xs hover:bg-white/5 ${selected === entry.path ? "bg-white/10 text-white" : "text-paper-1"}`}
-        aria-expanded={entry.type === "directory" ? open.has(entry.path) : undefined}
-        aria-current={selected === entry.path ? "true" : undefined}
-        onClick={() => entry.type === "file" ? onSelect(entry.path) : setOpen(previous => {
-          const next = new Set(previous); if (next.has(entry.path)) next.delete(entry.path); else next.add(entry.path); return next;
-        })}>
-        {entry.type === "directory" ? <><ChevronRight size={12} className={`shrink-0 ${open.has(entry.path) ? "rotate-90" : ""}`} /><Folder size={14} className="shrink-0" /></> : <FileCode2 size={14} className="ml-5 shrink-0" />}
-        <span className="break-all">{entry.name}</span>
-      </button>
-      {entry.type === "directory" && open.has(entry.path) && <div className="ml-3 border-l border-hairline pl-2"><Directory path={entry.path} read={read} selected={selected} onSelect={onSelect} /></div>}
-    </li>)}
-    {!data.entries.length && <li className="p-3 text-xs text-paper-2">Empty folder.</li>}
-    {data.truncated && <li className="p-3 text-xs text-paper-2">Showing the first 1,000 entries. View the complete folder on GitHub.</li>}
-  </ul>;
+// Folders load when they open, so an unloaded folder carries one status row as
+// its child. TreeView treats any node with children as an expandable folder.
+const STATUS = "\u0000status:";
+
+function buildNodes(path: string, folders: Map<string, Folder>): TreeNode[] {
+  const folder = folders.get(path);
+  if (!folder || folder.status === "loading") return [{ id: `${STATUS}${path}`, label: "Loading files…" }];
+  if (folder.status === "error") return [{ id: `${STATUS}${path}`, label: "Couldn’t load. Close and reopen to retry." }];
+  if (!folder.entries.length) return [{ id: `${STATUS}${path}`, label: "Empty folder" }];
+  const nodes = folder.entries.map<TreeNode>(entry => entry.type === "directory"
+    ? { id: entry.path, label: entry.name, children: buildNodes(entry.path, folders) }
+    : { id: entry.path, label: entry.name });
+  if (folder.truncated) nodes.push({ id: `${STATUS}${path}:truncated`, label: "First 1,000 entries shown" });
+  return nodes;
+}
+
+function languageOf(path: string) {
+  const extension = /\.([\w+-]+)$/.exec(path)?.[1]?.toLowerCase();
+  return extension || "text";
 }
 
 export default function RepositoryBrowser({ slug, config }: { slug: string; config: NonNullable<Project["repositoryBrowser"]> }) {
@@ -57,26 +51,71 @@ export default function RepositoryBrowser({ slug, config }: { slug: string; conf
       return result;
     };
   });
+  const [folders, setFolders] = useState<Map<string, Folder>>(() => new Map([["", { status: "loading" }]]));
+  const [expanded, setExpanded] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [file, setFile] = useState<Result | null>(null);
   const [error, setError] = useState("");
   const sequence = useRef(0);
+
+  const fetchFolder = useCallback((path: string) => {
+    read(path).then(result => {
+      if (result.type !== "directory") throw new Error("Could not load this folder.");
+      setFolders(previous => new Map(previous).set(path, { status: "ready", entries: result.entries, truncated: result.truncated }));
+    }).catch((reason: Error) => {
+      setFolders(previous => new Map(previous).set(path, { status: "error", message: reason.message }));
+    });
+  }, [read]);
+
+  useEffect(() => { fetchFolder(""); }, [fetchFolder]);
+
+  function loadFolder(path: string) {
+    setFolders(previous => new Map(previous).set(path, { status: "loading" }));
+    fetchFolder(path);
+  }
+
+  function onExpandedChange(next: string[]) {
+    for (const path of next) {
+      const folder = folders.get(path);
+      if (!expanded.includes(path) && (!folder || folder.status === "error")) loadFolder(path);
+    }
+    setExpanded(next);
+  }
+
   async function select(path: string) {
     const request = ++sequence.current;
     setSelected(path); setFile(null); setError("");
     try { const data = await read(path); if (request === sequence.current) setFile(data); }
     catch (reason) { if (request === sequence.current) setError(reason instanceof Error ? reason.message : "Unable to load file."); }
   }
-  return <div className="grid overflow-hidden border border-hairline bg-ink-1 md:grid-cols-[260px_minmax(0,1fr)]">
-    <nav aria-label="Repository files" className="max-h-72 overflow-auto border-b border-hairline p-3 md:max-h-[560px] md:border-r md:border-b-0"><Directory path="" read={read} selected={selected} onSelect={select} /></nav>
+
+  const files = new Set([...folders.values()].flatMap(folder => folder.status === "ready" ? folder.entries.filter(entry => entry.type === "file").map(entry => entry.path) : []));
+  const root = folders.get("");
+  const githubUrl = selected && `${config.url.replace(/\/$/, "")}/blob/${encodeURIComponent(config.branch || "HEAD")}/${[config.rootPath, selected].filter(Boolean).join("/").split("/").map(encodeURIComponent).join("/")}`;
+
+  return <div className="repo-browser">
+    <nav aria-label="Repository files" className="repo-tree">
+      {root?.status === "error" ? (
+        <Alert tone="danger" title="Couldn’t load the repository">
+          {root.message} <Button size="sm" variant="secondary" className="mt-3" onClick={() => loadFolder("")}>Retry</Button>
+        </Alert>
+      ) : (
+        <ScrollArea viewportClassName="repo-tree-scroll" label="Repository files">
+          <TreeView aria-label="Repository files" nodes={buildNodes("", folders)} expandedIds={expanded} onExpandedChange={onExpandedChange} onSelect={node => { if (files.has(node.id)) select(node.id); }} />
+        </ScrollArea>
+      )}
+    </nav>
     <div className="min-w-0">
-      <div className="border-b border-hairline px-5 py-3 font-mono text-xs break-all text-paper-1">{selected || "Source preview"}</div>
-      {!selected && <p className="p-8 text-sm text-paper-2">Choose a file to explore the source code.</p>}
-      {selected && !file && !error && <p role="status" className="p-8 text-sm text-paper-2">Loading file…</p>}
-      {error && <div role="alert" className="p-8 text-sm text-paper-1">{error} <button className="underline" onClick={() => selected && select(selected)}>Retry</button></div>}
-      {selected && <a className="mx-5 my-3 inline-block text-xs text-paper-2 underline" href={`${config.url.replace(/\/$/, "")}/blob/${encodeURIComponent(config.branch || "HEAD")}/${[config.rootPath, selected].filter(Boolean).join("/").split("/").map(encodeURIComponent).join("/")}`} target="_blank" rel="noreferrer">Open file on GitHub ↗</a>}
-      {file?.type === "unsupported" && <p className="p-8 text-sm text-paper-2">{file.message}</p>}
-      {file?.type === "file" && <pre tabIndex={0} aria-label={selected || "File contents"} className="max-h-[520px] overflow-auto p-5 font-mono text-xs leading-6 text-paper-1"><code>{file.content}</code></pre>}
+      {!selected && <p className="repo-hint">Choose a file to explore the source code.</p>}
+      {selected && !file && !error && <p role="status" className="repo-hint">Loading {selected}…</p>}
+      {selected && error && (
+        <Alert tone="danger" title="Couldn’t load this file">
+          {error} <Button size="sm" variant="secondary" className="mt-3" onClick={() => select(selected)}>Retry</Button>
+        </Alert>
+      )}
+      {file?.type === "unsupported" && <Alert tone="info" title="Preview unavailable">{file.message}</Alert>}
+      {selected && file?.type === "file" && <CodeBlock code={file.content} filename={selected} language={languageOf(selected)} maxLines={28} />}
+      {githubUrl && <a className="text-link mt-4 inline-flex items-center gap-1" href={githubUrl} target="_blank" rel="noreferrer">Open file on GitHub <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden="true" /></a>}
     </div>
   </div>;
 }

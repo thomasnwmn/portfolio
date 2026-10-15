@@ -2,10 +2,11 @@
 
 import type { Project } from "@/lib/projects";
 import dynamic from "next/dynamic";
+import { Skeleton } from "./arc/skeleton/skeleton";
 
 const RepositoryBrowser = dynamic(() => import("./RepositoryBrowser"), {
   ssr: false,
-  loading: () => <p className="p-6 text-paper-2" role="status">Loading repository browser…</p>,
+  loading: () => <Skeleton lines={4} label="Loading repository browser" />,
 });
 
 export default function RepositoryBrowserLoader({ slug, config }: { slug: string; config: NonNullable<Project["repositoryBrowser"]> }) {
