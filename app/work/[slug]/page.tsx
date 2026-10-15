@@ -15,7 +15,10 @@ type Props = { params: Promise<{ slug: string }> };
 // Prerender every published project at build time. New projects render on their
 // first visit and are cached from then on.
 export async function generateStaticParams() {
-  return (await getProjects()).map(project => ({ slug: project.slug }));
+  const params = (await getProjects()).map(project => ({ slug: project.slug }));
+  // Cache Components fails the build on an empty list (e.g. Notion env vars
+  // missing in a preview build). The placeholder matches nothing, so it 404s.
+  return params.length ? params : [{ slug: "__placeholder__" }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
