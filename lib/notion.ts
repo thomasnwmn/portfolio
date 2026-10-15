@@ -1,8 +1,9 @@
-import { Client, isFullBlock, isFullPage } from "@notionhq/client";
+import { Client, isFullPage } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { NotionToMarkdown } from "notion-to-md";
 import type { MdBlock } from "notion-to-md/build/types";
 import { cacheLife, cacheTag } from "next/cache";
+import { registerTransformers } from "./notion-blocks";
 
 export const notion = new Client({
   auth: process.env.NOTION_TOKEN,
@@ -10,35 +11,14 @@ export const notion = new Client({
 
 export const n2m = new NotionToMarkdown({ notionClient: notion });
 
-// Notion-hosted files use signed URLs that expire after about an hour, which would
-// break once a page is cached. Point them at the stable proxy route instead; it
-// resolves a fresh URL on demand. External media keeps notion-to-md's default output.
-function mediaUrl(blockId: string, lastEditedTime: string) {
-  return `/api/notion-image/block/${blockId}/${Date.parse(lastEditedTime)}`;
-}
-
-function escapeHtml(value: string) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-n2m.setCustomTransformer("image", block => {
-  if (!isFullBlock(block) || block.type !== "image" || block.image.type !== "file") return false;
-  const caption = escapeHtml(block.image.caption.map(part => part.plain_text).join("").trim());
-  return `<figure class="notion-media"><img src="${mediaUrl(block.id, block.last_edited_time)}" alt="${caption}" loading="lazy" />${caption ? `<figcaption>${caption}</figcaption>` : ""}</figure>`;
-});
-
-n2m.setCustomTransformer("video", block => {
-  if (!isFullBlock(block) || block.type !== "video" || block.video.type !== "file") return false;
-  const caption = escapeHtml(block.video.caption.map(part => part.plain_text).join("").trim());
-  return `<figure class="notion-media"><video src="${mediaUrl(block.id, block.last_edited_time)}" controls preload="metadata"></video>${caption ? `<figcaption>${caption}</figcaption>` : ""}</figure>`;
-});
-
 export type Post = {
   id: string;
   title: string;
   slug: string;
   date: string;
   summary: string;
+  tags: string[];
+  image: string | null;
   lastEditedTime: string;
 };
 
@@ -89,6 +69,8 @@ export function normalizeNotionMarkdown(md: string): string {
     .replace(/<\/details>/g, "\n\n</details>\n\n");
 }
 
+registerTransformers(n2m, notion, fixToggleBlocks);
+
 // Converts a Notion page body to the markdown both blog posts and projects render.
 export async function pageMarkdown(pageId: string): Promise<string> {
   const mdBlocks = await n2m.pageToMarkdown(pageId);
@@ -109,13 +91,16 @@ export function isPublishedPost(page: PageObjectResponse): boolean {
 }
 
 function toPost(page: PageObjectResponse): Post {
-  const { Title, Slug, Date: date, Summary } = page.properties;
+  const { Title, Slug, Date: date, Summary, Tags } = page.properties;
   return {
     id: page.id,
     title: Title?.type === "title" ? Title.title.map(part => part.plain_text).join("") || "Untitled" : "Untitled",
     slug: Slug?.type === "rich_text" ? Slug.rich_text.map(part => part.plain_text).join("") || page.id : page.id,
     date: date?.type === "date" ? date.date?.start || "" : "",
     summary: Summary?.type === "rich_text" ? Summary.rich_text.map(part => part.plain_text).join("") : "",
+    // Optional "Tags" multi-select and page cover in the blog database.
+    tags: Tags?.type === "multi_select" ? Tags.multi_select.map(tag => tag.name) : [],
+    image: page.cover ? `/api/notion-image/cover/${page.id}/${Date.parse(page.last_edited_time)}` : null,
     lastEditedTime: page.last_edited_time,
   };
 }

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { getPostBySlug, getPosts, formatLastEdited } from "@/lib/notion";
-import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
+import { notFound } from "next/navigation";
+import { ArrowLeft, CalendarDays, Clock } from "lucide-react";
+import { getPostBySlug, getPosts, formatLastEdited } from "@/lib/notion";
+import { extractHeadings, formatDate, readingMinutes } from "@/lib/markdown";
+import NotionContent from "@/components/notion/NotionContent";
+import TableOfContents from "@/components/notion/TableOfContents";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -27,51 +29,62 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPost({ params }: Props) {
   const { slug } = await params;
-  const decodedSlug = decodeURIComponent(slug);
-  const data = await getPostBySlug(decodedSlug);
-
-  if (!data) {
-    notFound();
-  }
+  const data = await getPostBySlug(decodeURIComponent(slug));
+  if (!data) notFound();
 
   const { post, markdown } = data;
+  const headings = extractHeadings(markdown);
+  const posts = await getPosts();
+  const index = posts.findIndex(item => item.slug === post.slug);
+  // Posts are sorted newest first.
+  const newer = index > 0 ? posts[index - 1] : undefined;
+  const older = index >= 0 && index < posts.length - 1 ? posts[index + 1] : undefined;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 md:px-10 py-24">
-      <div className="mb-12">
-        <Link href="/blog" className="font-mono text-[12px] text-chrome-mid hover:text-paper-0 transition-colors mb-8 inline-block">
-          ← Back to writing
-        </Link>
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-paper-0 mb-4">
-          {post.title}
-        </h1>
-        <div className="flex items-center gap-4 text-paper-2 font-mono text-[13px]">
-          <time dateTime={post.date}>{post.date}</time>
+    <>
+      <div className="reading-progress" aria-hidden="true" />
+      <div className="page-shell">
+        <Link href="/blog" className="back-link"><ArrowLeft size={14} aria-hidden="true" /> All posts</Link>
+        <header className="post-header">
+          <div className="post-meta">
+            {post.date && <span><CalendarDays size={13} aria-hidden="true" /><time dateTime={post.date}>{formatDate(post.date)}</time></span>}
+            <span><Clock size={13} aria-hidden="true" />{readingMinutes(markdown)} min read</span>
+            {post.tags.map(tag => <span key={tag} className="tech-tag">{tag}</span>)}
+          </div>
+          <h1 className="page-title">{post.title}</h1>
+          {post.summary && <p className="section-intro">{post.summary}</p>}
+        </header>
+
+        {post.image && (
+          <div className="post-cover">
+            <Image src={post.image} alt="" fill priority sizes="(max-width: 1280px) 100vw, 1200px" className="object-cover" />
+          </div>
+        )}
+
+        <div className="content-layout">
+          <NotionContent markdown={markdown} />
+          <aside><TableOfContents headings={headings} /></aside>
         </div>
+
+        {post.lastEditedTime && <p className="page-meta">{formatLastEdited(post.lastEditedTime)}</p>}
+
+        {(newer || older) && (
+          <nav aria-label="More posts" className="project-pagination">
+            {older ? (
+              <Link href={`/blog/${older.slug}`}>
+                <span className="eyebrow">← Older post</span>
+                <span className="mt-3 block text-xl">{older.title}</span>
+              </Link>
+            ) : <span />}
+            {newer && (
+              <Link href={`/blog/${newer.slug}`}>
+                <span className="eyebrow">Newer post →</span>
+                <span className="mt-3 block text-xl">{newer.title}</span>
+              </Link>
+            )}
+          </nav>
+        )}
       </div>
-
-      <article className="prose prose-invert prose-p:text-paper-1 prose-headings:text-paper-0 prose-a:text-paper-0 prose-a:underline-offset-4 hover:prose-a:text-chrome-mid prose-strong:text-paper-0 max-w-none">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          components={{
-            details({ className, ...props }) {
-              delete props.node;
-              return <details className={`notion-toggle ${className || ""}`} {...props} />;
-            },
-          }}
-        >
-          {markdown}
-        </ReactMarkdown>
-      </article>
-
-      {post.lastEditedTime && (
-        <div className="mt-16 pt-6 border-t border-hairline">
-          <p className="text-[13px] text-paper-2">
-            {formatLastEdited(post.lastEditedTime)}
-          </p>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

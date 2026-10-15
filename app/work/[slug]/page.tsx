@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ViewTransition } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
+import { ArrowLeft, ArrowUpRight, Clock, FolderGit2, Globe, MessageSquare } from "lucide-react";
 import RepositoryBrowserLoader from "@/components/RepositoryBrowserLoader";
 import ProjectVisual from "@/components/ProjectVisual";
-import SystemFlow, { parseFlow } from "@/components/SystemFlow";
+import NotionContent from "@/components/notion/NotionContent";
+import TableOfContents from "@/components/notion/TableOfContents";
 import { getProject, getProjectContent, getProjects, formatLastEdited } from "@/lib/projects";
+import { extractHeadings, readingMinutes } from "@/lib/markdown";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -43,9 +43,11 @@ export default async function ProjectPage({ params }: Props) {
   const next = allProjects[(safeIndex + 1) % allProjects.length];
 
   return (
+    <>
+    <div className="reading-progress" aria-hidden="true" />
     <div className="page-shell project-detail">
-      <Link href="/work" transitionTypes={["project-back"]} className="text-link mb-12 inline-flex">
-        ← All projects
+      <Link href="/work" transitionTypes={["project-back"]} className="back-link">
+        <ArrowLeft size={14} aria-hidden="true" /> All projects
       </Link>
       <div className="section-heading">
         <div>
@@ -65,70 +67,34 @@ export default async function ProjectPage({ params }: Props) {
         <ProjectVisual project={project} large />
       </ViewTransition>
       <div className="project-actions">
-        <p className="eyebrow">{project.category}</p>
+        <div className="post-meta">
+          <span>{project.category}</span>
+          {markdown && <span><Clock size={13} aria-hidden="true" />{readingMinutes(markdown)} min read</span>}
+        </div>
         <div className="flex flex-wrap gap-3">
           {project.liveUrl && (
             <a className="button-primary" href={project.liveUrl} target="_blank" rel="noreferrer">
-              View live project ↗
+              <Globe size={15} aria-hidden="true" /> View live project <ArrowUpRight size={15} aria-hidden="true" />
             </a>
           )}
           {project.sourceUrl && (
             <a className="button-secondary" href={project.sourceUrl} target="_blank" rel="noreferrer">
-              View source ↗
+              <FolderGit2 size={15} aria-hidden="true" /> View source <ArrowUpRight size={15} aria-hidden="true" />
             </a>
           )}
           {!project.liveUrl && !project.sourceUrl && (
             <Link className="button-secondary" href={`/contact?project=${project.slug}`}>
-              Discuss this project ↗
+              <MessageSquare size={15} aria-hidden="true" /> Discuss this project <ArrowUpRight size={15} aria-hidden="true" />
             </Link>
           )}
         </div>
       </div>
 
       {markdown ? (
-        <article className="project-body prose prose-invert max-w-none prose-p:text-paper-1 prose-li:text-paper-1 prose-headings:font-medium prose-headings:tracking-tight prose-headings:text-paper-0 prose-a:text-paper-0 prose-a:underline-offset-4 prose-strong:text-paper-0 prose-code:text-paper-0 prose-code:before:content-none prose-code:after:content-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
-            components={{
-              details({ className, ...props }) {
-                delete props.node;
-                return <details className={`notion-toggle ${className || ""}`} {...props} />;
-              },
-              code({ className, children, ...props }) {
-                const content = String(children).trim();
-                if (className === "language-flow" || content.startsWith("flow:")) {
-                  return <SystemFlow steps={parseFlow(content)} />;
-                }
-                const match = /language-(\w+)/.exec(className || "");
-                if (match || content.includes("\n")) {
-                  return (
-                    <figure className="notion-code not-prose my-6">
-                      <div className="notion-code-header"><span>{match ? match[1] : "code"}</span></div>
-                      <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-relaxed text-paper-0">
-                        <code>{children}</code>
-                      </pre>
-                    </figure>
-                  );
-                }
-                return (
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
-                );
-              },
-              blockquote({ children }) {
-                return (
-                  <aside className="notion-callout not-prose my-6">
-                    <div className="notion-callout-body">{children}</div>
-                  </aside>
-                );
-              },
-            }}
-          >
-            {markdown}
-          </ReactMarkdown>
-        </article>
+        <div className="content-layout">
+          <NotionContent markdown={markdown} className="project-body" />
+          <aside><TableOfContents headings={extractHeadings(markdown)} /></aside>
+        </div>
       ) : null}
 
       {project.repositoryBrowser && (
@@ -139,20 +105,14 @@ export default async function ProjectPage({ params }: Props) {
               <h2 className="mt-3 text-2xl font-medium tracking-tight">Explore the source.</h2>
             </div>
             <a className="text-link" href={project.repositoryBrowser.url} target="_blank" rel="noreferrer">
-              Open on GitHub ↗
+              Open on GitHub <ArrowUpRight size={13} className="inline" aria-hidden="true" />
             </a>
           </div>
           <RepositoryBrowserLoader slug={project.slug} config={project.repositoryBrowser} />
         </section>
       )}
 
-      {project.lastEditedTime && (
-        <div className="mt-16 pt-6 border-t border-hairline">
-          <p className="text-[13px] text-paper-2">
-            {formatLastEdited(project.lastEditedTime)}
-          </p>
-        </div>
-      )}
+      {project.lastEditedTime && <p className="page-meta">{formatLastEdited(project.lastEditedTime)}</p>}
 
       {allProjects.length > 1 && (
         <nav aria-label="More projects" className="project-pagination">
@@ -167,5 +127,6 @@ export default async function ProjectPage({ params }: Props) {
         </nav>
       )}
     </div>
+    </>
   );
 }

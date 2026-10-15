@@ -22,7 +22,10 @@ async function resolveMediaUrl(kind: string, id: string): Promise<string | null>
   }
   if (kind !== "block") return null;
   const block = await notion.blocks.retrieve({ block_id: id });
-  if (!isFullBlock(block) || (block.type !== "image" && block.type !== "video")) return null;
+  if (!isFullBlock(block)) return null;
+  const media = block.type === "image" ? block.image : block.type === "video" ? block.video
+    : block.type === "file" ? block.file : block.type === "pdf" ? block.pdf : null;
+  if (!media) return null;
   // Walk up through columns, toggles, etc. to the page that owns this block.
   let parent = block.parent;
   for (let depth = 0; depth < 12 && parent.type === "block_id"; depth++) {
@@ -31,7 +34,6 @@ async function resolveMediaUrl(kind: string, id: string): Promise<string | null>
     parent = ancestor.parent;
   }
   if (parent.type !== "page_id" || !(await resolvePublishedPage(parent.page_id))) return null;
-  const media = block.type === "image" ? block.image : block.video;
   return media.type === "external" ? media.external.url : media.file.url;
 }
 
@@ -50,7 +52,7 @@ export async function GET(request: Request, { params }: Params) {
       // The version segment changes whenever the page/block is edited, so the bytes are immutable.
       "Cache-Control": "public, max-age=31536000, immutable",
     });
-    for (const name of ["content-length", "content-range", "accept-ranges"]) {
+    for (const name of ["content-length", "content-range", "accept-ranges", "content-disposition"]) {
       const value = upstream.headers.get(name);
       if (value) headers.set(name, value);
     }
