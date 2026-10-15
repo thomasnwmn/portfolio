@@ -5,9 +5,6 @@ import { getProjects } from "@/lib/projects";
 
 export const metadata: Metadata = { title: "Work · Thomas Newman", description: "Computer engineering projects spanning embedded control, sensing, full-stack software, and systems programming." };
 
-// Keep in sync with PROJECTS_REVALIDATE (segment config must be a literal).
-export const revalidate = 300;
-
 export default async function Work() {
   const projects = await getProjects();
   return (

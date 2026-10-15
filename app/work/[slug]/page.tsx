@@ -12,8 +12,11 @@ import { getProject, getProjectContent, getProjects, formatLastEdited } from "@/
 
 type Props = { params: Promise<{ slug: string }> };
 
-// Keep in sync with PROJECTS_REVALIDATE (segment config must be a literal).
-export const revalidate = 300;
+// Prerender every published project at build time. New projects render on their
+// first visit and are cached from then on.
+export async function generateStaticParams() {
+  return (await getProjects()).map(project => ({ slug: project.slug }));
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const project = await getProject((await params).slug);
@@ -85,7 +88,8 @@ export default async function ProjectPage({ params }: Props) {
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw]}
             components={{
-              details({ node, className, ...props }) {
+              details({ className, ...props }) {
+                delete props.node;
                 return <details className={`notion-toggle ${className || ""}`} {...props} />;
               },
               code({ className, children, ...props }) {

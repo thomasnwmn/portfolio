@@ -1,5 +1,5 @@
 import { isFullBlock, isFullPage } from "@notionhq/client";
-import { notion } from "@/lib/notion";
+import { isPublishedPost, notion } from "@/lib/notion";
 import { isPublishedProject } from "@/lib/projects";
 
 type Params = { params: Promise<{ kind: string; id: string; version: string }> };
@@ -8,10 +8,10 @@ const NOTION_ID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]
 
 // Notion file URLs are signed and expire after about an hour, so the site links to
 // this stable route. It resolves a fresh signed URL on each cache miss and only
-// serves media belonging to published pages in the projects database.
+// serves media belonging to published pages in the projects or blog databases.
 async function resolvePublishedPage(pageId: string) {
   const page = await notion.pages.retrieve({ page_id: pageId });
-  return isFullPage(page) && isPublishedProject(page) ? page : null;
+  return isFullPage(page) && (isPublishedProject(page) || isPublishedPost(page)) ? page : null;
 }
 
 async function resolveMediaUrl(kind: string, id: string): Promise<string | null> {

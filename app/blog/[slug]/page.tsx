@@ -1,11 +1,28 @@
-import { getPostBySlug, formatLastEdited } from "@/lib/notion";
+import type { Metadata } from "next";
+import { getPostBySlug, getPosts, formatLastEdited } from "@/lib/notion";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 
-export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
+type Props = { params: Promise<{ slug: string }> };
+
+// Prerender every published post at build time. New posts render on their
+// first visit and are cached from then on.
+export async function generateStaticParams() {
+  return (await getPosts()).map(post => ({ slug: post.slug }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const data = await getPostBySlug(decodeURIComponent((await params).slug));
+  return {
+    title: data ? `${data.post.title} · Thomas Newman` : "Post not found · Thomas Newman",
+    description: data?.post.summary || undefined,
+  };
+}
+
+export default async function BlogPost({ params }: Props) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
   const data = await getPostBySlug(decodedSlug);
@@ -35,7 +52,8 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           components={{
-            details({ node, className, ...props }) {
+            details({ className, ...props }) {
+              delete props.node;
               return <details className={`notion-toggle ${className || ""}`} {...props} />;
             },
           }}

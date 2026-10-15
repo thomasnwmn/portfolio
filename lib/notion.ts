@@ -1,13 +1,37 @@
-import { Client, isFullPage } from "@notionhq/client";
+import { Client, isFullBlock, isFullPage } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { NotionToMarkdown } from "notion-to-md";
-import { connection } from "next/server";
+import type { MdBlock } from "notion-to-md/build/types";
+import { cacheLife, cacheTag } from "next/cache";
 
 export const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
 export const n2m = new NotionToMarkdown({ notionClient: notion });
+
+// Notion-hosted files use signed URLs that expire after about an hour, which would
+// break once a page is cached. Point them at the stable proxy route instead; it
+// resolves a fresh URL on demand. External media keeps notion-to-md's default output.
+function mediaUrl(blockId: string, lastEditedTime: string) {
+  return `/api/notion-image/block/${blockId}/${Date.parse(lastEditedTime)}`;
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+n2m.setCustomTransformer("image", block => {
+  if (!isFullBlock(block) || block.type !== "image" || block.image.type !== "file") return false;
+  const caption = escapeHtml(block.image.caption.map(part => part.plain_text).join("").trim());
+  return `<figure class="notion-media"><img src="${mediaUrl(block.id, block.last_edited_time)}" alt="${caption}" loading="lazy" />${caption ? `<figcaption>${caption}</figcaption>` : ""}</figure>`;
+});
+
+n2m.setCustomTransformer("video", block => {
+  if (!isFullBlock(block) || block.type !== "video" || block.video.type !== "file") return false;
+  const caption = escapeHtml(block.video.caption.map(part => part.plain_text).join("").trim());
+  return `<figure class="notion-media"><video src="${mediaUrl(block.id, block.last_edited_time)}" controls preload="metadata"></video>${caption ? `<figcaption>${caption}</figcaption>` : ""}</figure>`;
+});
 
 export type Post = {
   id: string;
@@ -41,7 +65,7 @@ export function formatLastEdited(dateString?: string): string {
   }
 }
 
-export function fixToggleBlocks(blocks: any[]): any[] {
+export function fixToggleBlocks(blocks: MdBlock[]): MdBlock[] {
   for (const block of blocks) {
     if (block.children && block.children.length > 0) {
       if (block.type && typeof block.type === "string" && block.type.startsWith("heading_")) {
@@ -65,9 +89,23 @@ export function normalizeNotionMarkdown(md: string): string {
     .replace(/<\/details>/g, "\n\n</details>\n\n");
 }
 
-function isPublished(page: PageObjectResponse): boolean {
+// Converts a Notion page body to the markdown both blog posts and projects render.
+export async function pageMarkdown(pageId: string): Promise<string> {
+  const mdBlocks = await n2m.pageToMarkdown(pageId);
+  fixToggleBlocks(mdBlocks);
+  const mdString = n2m.toMarkdownString(mdBlocks);
+  return normalizeNotionMarkdown(typeof mdString === "string" ? mdString : (mdString.parent || ""));
+}
+
+function sameId(a: string | undefined, b: string | undefined) {
+  return !!a && !!b && a.replace(/-/g, "") === b.replace(/-/g, "");
+}
+
+export function isPublishedPost(page: PageObjectResponse): boolean {
   const published = page.properties.Published;
-  return !page.archived && !page.in_trash && published?.type === "checkbox" && published.checkbox === true;
+  const parent = page.parent.type === "database_id" ? page.parent.database_id : undefined;
+  return !page.archived && !page.in_trash && published?.type === "checkbox" && published.checkbox === true
+    && sameId(parent, process.env.NOTION_DATABASE_ID);
 }
 
 function toPost(page: PageObjectResponse): Post {
@@ -83,8 +121,10 @@ function toPost(page: PageObjectResponse): Post {
 }
 
 export async function getPosts(): Promise<Post[]> {
-  // Publication state must be checked at request time, never from an ISR page.
-  await connection();
+  "use cache";
+  cacheLife("content");
+  // Expired on demand by /api/revalidate so unpublished posts disappear immediately.
+  cacheTag("posts");
   const databaseId = process.env.NOTION_DATABASE_ID;
   if (!databaseId) return [];
 
@@ -104,32 +144,21 @@ export async function getPosts(): Promise<Post[]> {
     ],
   });
 
-  return response.results.filter(isFullPage).filter(isPublished).map(toPost);
+  return response.results.filter(isFullPage).filter(isPublishedPost).map(toPost);
 }
 
 export async function getPostBySlug(slug: string) {
-  const databaseId = process.env.NOTION_DATABASE_ID;
-  if (!databaseId) return null;
-
-  // Fetch all published posts to use the exact same slug matching logic
-  const posts = await getPosts();
-  const postInfo = posts.find((p) => p.slug === slug);
-
-  if (!postInfo) {
-    return null;
-  }
+  "use cache";
+  cacheLife("content");
+  cacheTag("posts");
+  // Use the exact same slug matching logic as the index.
+  const postInfo = (await getPosts()).find((p) => p.slug === slug);
+  if (!postInfo) return null;
 
   // Confirm the page itself is still published before loading its body.
   // A database query can lag behind a just-updated checkbox.
   const page = await notion.pages.retrieve({ page_id: postInfo.id });
-  if (!isFullPage(page) || !isPublished(page)) return null;
+  if (!isFullPage(page) || !isPublishedPost(page)) return null;
 
-  const mdBlocks = await n2m.pageToMarkdown(postInfo.id);
-  fixToggleBlocks(mdBlocks);
-  const mdString = n2m.toMarkdownString(mdBlocks);
-
-  return {
-    post: postInfo,
-    markdown: normalizeNotionMarkdown(typeof mdString === "string" ? mdString : (mdString.parent || "")),
-  };
+  return { post: postInfo, markdown: await pageMarkdown(postInfo.id) };
 }
