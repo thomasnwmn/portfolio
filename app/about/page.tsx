@@ -2,6 +2,7 @@ import {GitHubCalendar} from 'react-github-calendar';
 import Image from 'next/image';
 import portrait from '@/public/aboutme.png';
 import type { Metadata } from 'next';
+import TechTags from '@/components/TechTags';
 
 export const metadata: Metadata = { title: 'About · Thomas Newman' };
 
@@ -30,16 +31,8 @@ export default function About() {
         </div>
         <div>
           <Image src={portrait} alt="Thomas Newman" placeholder="blur" sizes="(max-width: 768px) 100vw, 50vw" className="w-full h-auto mb-10" />
-          <p className="font-mono text-[11px] text-chrome-mid mb-6 tracking-wider uppercase">
-            Capabilities
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {["Next.js", "TypeScript", "Tailwind CSS", "Node.js", "Java", "Python", "C/C++", "Git", "System Architecture", "RISC-V", "Digital Logic Design"].map(skill => (
-              <span key={skill} className="font-mono text-[12px] border border-hairline bg-ink-1 px-3 py-1.5 text-paper-1">
-                {skill}
-              </span>
-            ))}
-          </div>
+          <h2 className="mb-5 text-lg font-medium text-paper-0">Capabilities</h2>
+          <TechTags tags={["Next.js", "TypeScript", "Tailwind CSS", "Node.js", "Java", "Python", "C/C++", "Git", "System Architecture", "RISC-V", "Digital Logic Design"]} />
         </div>
       </div>
     </div>

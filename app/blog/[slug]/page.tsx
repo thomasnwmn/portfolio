@@ -7,6 +7,7 @@ import { getPostBySlug, getPosts, formatLastEdited } from "@/lib/notion";
 import { extractHeadings, formatDate, readingMinutes } from "@/lib/markdown";
 import NotionContent from "@/components/notion/NotionContent";
 import TableOfContents from "@/components/notion/TableOfContents";
+import TechTags from "@/components/TechTags";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -49,7 +50,7 @@ export default async function BlogPost({ params }: Props) {
           <div className="post-meta">
             {post.date && <span><CalendarDays size={13} aria-hidden="true" /><time dateTime={post.date}>{formatDate(post.date)}</time></span>}
             <span><Clock size={13} aria-hidden="true" />{readingMinutes(markdown)} min read</span>
-            {post.tags.map(tag => <span key={tag} className="tech-tag">{tag}</span>)}
+            <TechTags tags={post.tags} />
           </div>
           <h1 className="page-title">{post.title}</h1>
           {post.summary && <p className="section-intro">{post.summary}</p>}

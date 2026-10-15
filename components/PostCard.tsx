@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { ArrowUpRight, CalendarDays } from "lucide-react";
 import type { Post } from "@/lib/notion";
 import { formatDate } from "@/lib/markdown";
+import TechTags from "./TechTags";
 
 export default function PostCard({ post, index, featured = false }: { post: Post; index: number; featured?: boolean }) {
   return (
@@ -18,7 +19,7 @@ export default function PostCard({ post, index, featured = false }: { post: Post
       <div className="post-card-body">
         <div className="post-meta">
           {post.date && <span><CalendarDays size={13} aria-hidden="true" /><time dateTime={post.date}>{formatDate(post.date)}</time></span>}
-          {post.tags.map(tag => <span key={tag} className="tech-tag">{tag}</span>)}
+          <TechTags tags={post.tags} />
         </div>
         <h2>{post.title}</h2>
         {post.summary && <p>{post.summary}</p>}

@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import SystemFlow, { parseFlow } from "@/components/SystemFlow";
 import { slugify } from "@/lib/markdown";
-import CopyButton from "./CopyButton";
+import { CodeBlock } from "@/components/arc/code-block/code-block";
 import ZoomableImage from "./ZoomableImage";
 
 function textOf(node: ReactNode): string {
@@ -38,14 +38,11 @@ const components: Components = {
     }
     const language = /language-([\w+#-]+)/.exec(className || "")?.[1];
     if (!language && !content.includes("\n")) return <code className={className}>{children}</code>;
+    const label = language && language !== "plain" ? language : "text";
     return (
-      <figure className="notion-code not-prose">
-        <div className="notion-code-header">
-          <span>{language && language !== "plain" ? language : "code"}</span>
-          <CopyButton text={content} />
-        </div>
-        <pre><code>{content}</code></pre>
-      </figure>
+      <div className="notion-codeblock not-prose">
+        <CodeBlock code={content} language={label} maxLines={24} />
+      </div>
     );
   },
   blockquote: ({ children }) => <blockquote className="notion-quote">{children}</blockquote>,

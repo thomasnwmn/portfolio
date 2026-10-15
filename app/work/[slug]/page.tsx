@@ -7,6 +7,7 @@ import RepositoryBrowserLoader from "@/components/RepositoryBrowserLoader";
 import ProjectVisual from "@/components/ProjectVisual";
 import NotionContent from "@/components/notion/NotionContent";
 import TableOfContents from "@/components/notion/TableOfContents";
+import TechTags from "@/components/TechTags";
 import { getProject, getProjectContent, getProjects, formatLastEdited } from "@/lib/projects";
 import { extractHeadings, readingMinutes } from "@/lib/markdown";
 
@@ -56,11 +57,7 @@ export default async function ProjectPage({ params }: Props) {
         </div>
         <div>
           <p className="section-intro">{project.summary}</p>
-          <div className="mt-7 flex flex-wrap gap-2">
-            {project.stack.map(tag => (
-              <span key={tag} className="tech-tag">{tag}</span>
-            ))}
-          </div>
+          <TechTags tags={project.stack} className="mt-7" />
         </div>
       </div>
       <ViewTransition name={`visual-${project.slug}`} share="project-morph" default="none">
