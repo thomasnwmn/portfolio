@@ -73,7 +73,7 @@ async function Post({ params }: Props) {
 
       {post.image && (
         <div className="post-cover">
-          <Image src={post.image} alt="" fill priority sizes="(max-width: 1280px) 100vw, 1200px" className="object-cover" />
+          <Image src={post.image} alt="" fill preload sizes="(max-width: 1280px) 100vw, 1200px" className="object-cover" />
         </div>
       )}
 

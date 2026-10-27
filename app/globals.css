@@ -21,6 +21,8 @@
    Arc components sit on the same ink and hairlines as everything else. */
 :root[data-theme="dark"] {
   --font-geist: var(--font-geist-sans);
+  /* Arc sets body text in Inter; Geist stands in so the site loads one sans face. */
+  --font-inter: var(--font-geist-sans);
   --background: var(--ink-0);
   --surface: var(--ink-0);
   --surface-raised: var(--ink-1);
@@ -68,13 +70,16 @@ button { cursor: pointer; }
 main:focus { outline: none; }
 /* Links carry inline padding for the hover highlight; the list's negative
    margin keeps the text edges where they were. */
-.nav-list { isolation: isolate; margin-inline: -10px; }
-/* Isolate the list, not each link: the gliding highlight crosses neighbouring
-   links mid-flight and must stay beneath all of their labels. */
+/* Isolate the nav, not each link: the one shared highlight crosses
+   neighbouring links mid-flight and must stay beneath all of their labels. */
+.nav-primary { isolation: isolate; }
+.nav-list { margin-inline: -10px; }
 .nav-link { display: inline-block; padding: 9px 10px; border-radius: 10px; }
 .nav-link[aria-current="page"] { color: var(--paper-0); }
-.nav-hover { position: absolute; inset: 2px 0; z-index: -1; border-radius: inherit; background: var(--ink-1); }
-.nav-current { position: absolute; left: 10px; right: 10px; bottom: 3px; height: 1px; background: var(--chrome-hi); }
+.nav-hover { position: absolute; top: 0; left: 0; z-index: -1; border-radius: 10px; background: var(--ink-1); opacity: 0; pointer-events: none; transition: transform 300ms var(--ease-standard), width 300ms var(--ease-standard), height 300ms var(--ease-standard), opacity var(--duration-fast) var(--ease-standard); }
+.nav-hover[data-visible="true"] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .nav-hover { transition: opacity var(--duration-fast) var(--ease-standard); } }
+.nav-current { position: absolute; left: 10px; right: 10px; bottom: 3px; height: 1px; background: var(--chrome-hi); transform-origin: left; }
 .route-content { min-height: calc(100svh - 180px); }
 /* Cache Components keeps the previous route mounted but hidden (React <Activity>
    sets an inline display: none) so Back can restore it. Only a visible home page

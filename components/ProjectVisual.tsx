@@ -9,6 +9,9 @@ export default function ProjectVisual({ project, large = false }: { project: Pro
           src={project.image}
           alt={project.title}
           fill
+          // The large visual heads a project page, so it's the likely LCP element.
+          loading={large ? "eager" : "lazy"}
+          fetchPriority={large ? "high" : "auto"}
           sizes={large ? "(max-width: 1280px) 100vw, 1280px" : "(max-width: 768px) 100vw, 50vw"}
           className="object-cover"
         />

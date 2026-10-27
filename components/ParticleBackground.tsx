@@ -161,6 +161,8 @@ export default function ParticleBackground() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    // Data Saver asks for less work and fewer bytes; the gradient stands in alone.
+    if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
     const gl = canvas.getContext("webgl", { alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: "low-power" });
     if (!gl) return;
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");

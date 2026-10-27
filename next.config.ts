@@ -3,6 +3,16 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // The default merge puts every Arc component's CSS module into one sheet that
+    // blocks rendering on every page; graph mode keeps each route to what it uses.
+    cssChunking: "graph",
+  },
+  images: {
+    // AVIF first: roughly a fifth smaller than WebP, which matters most on slow connections.
+    formats: ["image/avif", "image/webp"],
+    qualities: [75],
+  },
   cacheLife: {
     // Shared lifetime for all Notion-backed content (blog + projects).
     // Pages refresh in the background every 5 minutes; /api/revalidate

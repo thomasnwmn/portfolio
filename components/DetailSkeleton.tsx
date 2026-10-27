@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/arc/skeleton/skeleton";
 // the page shell, under the back link, so the App Shell keeps both.
 export default function DetailSkeleton({ label }: { label: string }) {
   return (
-    <div className="min-h-[70svh]">
+    <div className="min-h-svh">
       <div className="max-w-xl space-y-6">
         <div className="skeleton h-16 w-3/4" aria-hidden="true" />
         <Skeleton lines={2} label={label} />

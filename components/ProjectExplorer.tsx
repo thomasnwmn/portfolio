@@ -11,12 +11,16 @@ import { SearchField } from "./arc/search-field/search-field";
 import ProjectCard from "./ProjectCard";
 
 export default function ProjectExplorer({ projects }: { projects: Project[] }) {
-  const categories = [...new Set(projects.map(project => project.category))];
   const searchParams = useSearchParams();
-  const requestedCategory = searchParams.get("category");
+  return <ProjectIndex projects={projects} requestedCategory={searchParams.get("category")} query={searchParams.get("q") ?? ""} />;
+}
+
+// Rendered unfiltered as the Suspense fallback too, so the prerendered HTML
+// already lists every project before the filters hydrate.
+export function ProjectIndex({ projects, requestedCategory = null, query = "" }: { projects: Project[]; requestedCategory?: string | null; query?: string }) {
+  const categories = [...new Set(projects.map(project => project.category))];
   // No chip selected means every category.
   const category = categories.find(item => item === requestedCategory) ?? null;
-  const query = searchParams.get("q") ?? "";
   function updateFilters(nextCategory: string | null, nextQuery: string) {
     const params = new URLSearchParams();
     if (nextCategory) params.set("category", nextCategory);

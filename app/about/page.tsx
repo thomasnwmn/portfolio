@@ -37,7 +37,7 @@ export default async function About() {
             </p>
           </div>
         </div>
-        <Image src={portrait} alt="Thomas Newman in front of Niagara Falls" placeholder="blur" priority sizes="(max-width: 900px) 100vw, 40vw" className="about-portrait" />
+        <Image src={portrait} alt="Thomas Newman in front of Niagara Falls" placeholder="blur" loading="eager" fetchPriority="high" sizes="(max-width: 900px) 100vw, 40vw" className="about-portrait" />
         <section className="about-activity" aria-labelledby="activity">
           <div className="about-heading-row">
             <h2 id="activity" className="about-subheading">GitHub activity</h2>

@@ -12,8 +12,6 @@
   letter-spacing: -.01em;
   line-height: 1;
   white-space: nowrap;
-  /* Clip keeps the inline baseline while the pill morphs around swapped text. */
-  overflow: clip;
   transition: border-color var(--duration-standard) var(--ease-standard), background-color var(--duration-standard) var(--ease-standard), color var(--duration-standard) var(--ease-standard);
 }
 
@@ -23,11 +21,9 @@
 .sm { min-height: 22px; padding: 0 8px; font-size: 11px; }
 .md { font-size: var(--text-xs); }
 
-.body { display: block; }
 .content { position: relative; display: inline-flex; width: max-content; align-items: center; gap: 5px; }
 .sm .content { gap: 4px; }
-.label, .glyph { position: relative; display: inline-flex; align-items: center; }
-.text { display: block; }
+.label { position: relative; display: inline-flex; align-items: center; }
 
 .icon {
   position: relative;

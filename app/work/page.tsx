@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ProjectExplorer from "@/components/ProjectExplorer";
+import ProjectExplorer, { ProjectIndex } from "@/components/ProjectExplorer";
 import { Suspense } from "react";
 import { getProjects } from "@/lib/projects";
 
@@ -13,7 +13,7 @@ export default async function Work() {
         <div><h1 className="page-title">The <span className="text-chrome-hi/60">Projects.</span></h1></div>
         <p className="section-intro">I’m a computer engineering student building across the hardware-software boundary. Explore the sensing, control logic, data, and interfaces behind each project.</p>
       </div>
-      <Suspense fallback={<div className="skeleton h-96" role="status" aria-label="Loading project index" />}><ProjectExplorer projects={projects} /></Suspense>
+      <Suspense fallback={<ProjectIndex projects={projects} />}><ProjectExplorer projects={projects} /></Suspense>
     </div>
   );
 }

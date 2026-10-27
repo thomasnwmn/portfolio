@@ -3,18 +3,26 @@
 .iconOnly:active:not(:disabled) { transform: scale(.96); }
 @media (hover: hover) and (pointer: fine) { .button:hover:not(:disabled) { background: var(--surface-muted); border-color: var(--border-strong); } .plain:hover:not(:disabled) { border-color: transparent; background: var(--surface-muted); color: var(--foreground); } }
 .button:disabled { cursor: not-allowed; opacity: .5; }
-/* Each icon carries its own color, so the outgoing glyph never tints on its way out. */
+/* Each icon carries its own color, so the outgoing glyph never tints on its way out. Icons trade places in one soft
+   breath: the old glyph shrinks into a blur while the new one grows out of it on the slow spring. */
 .icon { position: relative; display: grid; width: 16px; height: 16px; flex: none; }
-.iconInner { position: absolute; inset: 0; display: grid; place-items: center; }
+.iconInner { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; scale: .6; filter: blur(4px); transition: opacity .2s var(--ease-standard), scale .24s var(--ease-standard), filter .2s var(--ease-standard); }
 .iconInner[data-state="copied"] { color: var(--success); }
 .iconInner[data-state="error"] { color: var(--danger); }
+.button[data-copy-state="idle"] .iconInner[data-state="idle"],
+.button[data-copy-state="copied"] .iconInner[data-state="copied"],
+.button[data-copy-state="error"] .iconInner[data-state="error"] { opacity: 1; scale: 1; filter: none; transition: opacity .36s var(--ease-enter) 30ms, scale var(--duration-spring) var(--ease-spring), filter .36s var(--ease-enter) 30ms; }
+/* The success tick draws itself from its short stroke while the icon settles. */
+.check { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.button[data-copy-state="copied"] .check { stroke-dashoffset: 0; transition: stroke-dashoffset .5s var(--ease-standard) 50ms; }
 /* The inline padding gives blurred edge letters room before the horizontal clip; the negative margin keeps the box the same size. */
 .label { display: grid; min-width: 0; margin-inline: calc(var(--space-1) * -1); padding-inline: var(--space-1); overflow-x: clip; text-align: left; white-space: nowrap; }
-.measure, .glyphs { grid-area: 1 / 1; }
-.measure { visibility: hidden; }
-.glyphs { position: relative; display: inline-flex; justify-self: start; white-space: pre; }
-.glyph { display: inline-block; }
+/* Words rise out of a soft blur; the outgoing word lifts away a little faster. */
+.text { grid-area: 1 / 1; opacity: 0; translate: 0 -3px; filter: blur(4px); transition: opacity .2s var(--ease-standard), translate .2s var(--ease-standard), filter .2s var(--ease-standard); }
+.button[data-copy-state="idle"] .text[data-state="idle"],
+.button[data-copy-state="copied"] .text[data-state="copied"],
+.button[data-copy-state="error"] .text[data-state="error"] { opacity: 1; translate: 0 0; filter: none; transition-duration: .36s; transition-timing-function: var(--ease-enter); }
 .iconOnly { width: var(--control-height-sm); padding: 0; }
 .plain { border-color: transparent; background: transparent; color: var(--text-secondary); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-@media (prefers-reduced-motion: reduce) { .button { transition: none; } .button:active:not(:disabled) { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .button { transition: none; } .button:active:not(:disabled) { transform: none; } .iconInner, .text { scale: 1; translate: none; filter: none; transition-duration: var(--duration-instant) !important; } .check { stroke-dashoffset: 0; } }

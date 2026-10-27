@@ -1,4 +1,5 @@
 import { isFullBlock, isFullPage } from "@notionhq/client";
+import sharp from "sharp";
 import { isPublishedPost, notion } from "@/lib/notion";
 import { isPublishedProject } from "@/lib/projects";
 
@@ -37,6 +38,17 @@ async function resolveMediaUrl(kind: string, id: string): Promise<string | null>
   return media.type === "external" ? media.external.url : media.file.url;
 }
 
+// Next's image optimizer passes animated images through untouched, so a GIF cover
+// would reach phones at full size (one is ~20 MB). Re-encode animated GIFs as a
+// smaller animated WebP here; the optimizer then caches the result. Still images
+// pass through for the optimizer to resize.
+const ANIMATED_WIDTH = 640;
+async function shrinkAnimated(body: ArrayBuffer) {
+  const input = sharp(body, { animated: true });
+  if (((await input.metadata()).pages ?? 1) < 2) return null;
+  return input.resize({ width: ANIMATED_WIDTH, withoutEnlargement: true }).webp({ quality: 65, effort: 4 }).toBuffer();
+}
+
 export async function GET(request: Request, { params }: Params) {
   const { kind, id, version } = await params;
   if (!NOTION_ID.test(id) || !/^\d+$/.test(version)) return new Response("Not found", { status: 404 });
@@ -47,6 +59,16 @@ export async function GET(request: Request, { params }: Params) {
     const range = request.headers.get("range");
     const upstream = await fetch(mediaUrl, { headers: range ? { Range: range } : {}, cache: "no-store" });
     if (!upstream.ok || !upstream.body) return new Response("Media unavailable", { status: 502 });
+    // Notion can label a GIF as image/jpeg, so sniff the file header instead of trusting the type.
+    if (!range && upstream.headers.get("content-type")?.startsWith("image/")) {
+      const body = await upstream.arrayBuffer();
+      const isGif = new TextDecoder().decode(new Uint8Array(body, 0, Math.min(4, body.byteLength))) === "GIF8";
+      const webp = isGif ? await shrinkAnimated(body).catch(() => null) : null;
+      return new Response(webp ? new Uint8Array(webp) : body, { headers: {
+        "Content-Type": webp ? "image/webp" : isGif ? "image/gif" : upstream.headers.get("content-type")!,
+        "Cache-Control": "public, max-age=31536000, immutable",
+      } });
+    }
     const headers = new Headers({
       "Content-Type": upstream.headers.get("content-type") || "application/octet-stream",
       // The version segment changes whenever the page/block is edited, so the bytes are immutable.
