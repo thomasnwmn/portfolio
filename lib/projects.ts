@@ -85,6 +85,11 @@ function toProject(page: PageObjectResponse, index: number): Project {
   };
 }
 
+function priority(page: PageObjectResponse) {
+  const value = page.properties.Priority;
+  return value?.type === "number" ? value.number ?? undefined : undefined;
+}
+
 export { formatLastEdited };
 
 // Lifetime comes from the "content" profile in next.config.ts; /api/revalidate
@@ -103,8 +108,6 @@ export async function getProjects(): Promise<Project[]> {
       const response = await notion.databases.query({
         database_id: databaseId,
         filter: { property: "Published", checkbox: { equals: true } },
-        // Notion's API can't read a table's drag-and-drop row order, so
-        // projects follow the order they were added: the newest shows first.
         sorts: [{ timestamp: "created_time", direction: "descending" }],
         start_cursor: cursor,
       });
@@ -112,7 +115,14 @@ export async function getProjects(): Promise<Project[]> {
       cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
     } while (cursor);
 
-    const published = pages.filter(isPublishedProject);
+    // Notion's API can't read a table's drag-and-drop row order, so a
+    // "Priority" number decides it: highest first, and decimals slot a project
+    // between two others. Projects without one follow, newest created first.
+    // Sorting here (not in the query) keeps working if the column is missing.
+    const published = pages.filter(isPublishedProject)
+      .map((page, index) => ({ page, index, priority: priority(page) }))
+      .sort((a, b) => (b.priority ?? -Infinity) - (a.priority ?? -Infinity) || a.index - b.index)
+      .map(({ page }) => page);
     return published.map(toProject);
   } catch (error) {
     console.warn("Could not query Notion projects database:", error);

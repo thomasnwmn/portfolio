@@ -122,6 +122,13 @@ body > header, body > footer { flex-shrink: 0; }
 .project-card { display: block; min-width: 0; background: var(--ink-0); transition: background 220ms; }
 .project-card:hover { background: #111315; }
 .project-card:focus-visible { position: relative; z-index: 1; outline-offset: -2px; }
+/* A card left alone on the last row (odd counts, search results) spans it,
+   with its visual beside the copy, so the grid never ends in an empty cell. */
+@media (min-width: 641px) {
+  .project-grid > .project-card:last-child:nth-child(odd) { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .project-grid > .project-card:last-child:nth-child(odd) .project-visual { aspect-ratio: auto; min-height: 320px; border-bottom: 0; border-right: 1px solid var(--hairline); }
+  .project-grid > .project-card:last-child:nth-child(odd) > :last-child { align-self: center; }
+}
 .card-arrow { color: var(--paper-1); font-size: 22px; transition: transform 220ms; }
 .project-card:hover .card-arrow { transform: translate(3px,-3px); }
 .project-visual { position: relative; overflow: hidden; aspect-ratio: 2 / 1; background: radial-gradient(ellipse at 50% 70%, #1d272a 0%, #101416 65%); color: #a4bec2; border-bottom: 1px solid var(--hairline); }
