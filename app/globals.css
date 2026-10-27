@@ -235,20 +235,29 @@ body > header, body > footer { flex-shrink: 0; }
 .notion-callout-body { min-width: 0; flex: 1; }
 .notion-callout-body > :first-child { margin-top: 0; }
 .notion-callout-body > :last-child { margin-bottom: 0; }
-/* Toggles */
-.notion-toggle { margin: 1.5rem 0; }
-.notion-toggle summary { display: flex; align-items: center; gap: 12px; cursor: pointer; list-style: none; padding: 8px 0; color: var(--paper-0); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; user-select: none; transition: opacity 150ms ease; }
-.notion-toggle summary:hover { opacity: 0.9; }
-.notion-toggle summary::-webkit-details-marker, .notion-toggle summary::marker { display: none; }
-.notion-toggle summary::before { content: ""; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 5px; background-color: rgba(255, 255, 255, 0.08); flex-shrink: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='%23e9ebef'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; transition: transform 180ms ease, background-color 150ms ease; }
-.notion-toggle summary:hover::before { background-color: rgba(255, 255, 255, 0.16); }
-.notion-toggle[open] summary::before { transform: rotate(90deg); }
-.notion-toggle summary > :is(h1,h2,h3,h4) { margin: 0 !important; font-weight: 600 !important; letter-spacing: -0.02em !important; line-height: 1.25 !important; }
-.notion-toggle summary > h1 { font-size: 2rem !important; }
-.notion-toggle summary > h2 { font-size: 1.65rem !important; }
-.notion-toggle summary > h3 { font-size: 1.3rem !important; }
-.notion-toggle > :not(summary) { padding-left: 34px; }
-.notion-toggle[open] > :not(summary) { animation: toggle-open 260ms cubic-bezier(.2,.7,.2,1) both; }
+/* Toggles: a row between hairlines, like the About experience list, with a
+   chevron that turns as it opens. Neighbouring toggles share one rule. */
+.notion-toggle { margin: 2.5rem 0; border-block: 1px solid var(--hairline); interpolate-size: allow-keywords; }
+.notion-toggle + .notion-toggle { margin-top: -2.5rem; border-top: 0; }
+.notion-toggle-summary { display: flex; align-items: center; gap: 16px; padding: 18px 2px; cursor: pointer; list-style: none; color: var(--paper-0); font-size: 1.15rem; font-weight: 500; letter-spacing: -.02em; line-height: 1.35; }
+.notion-toggle-summary::-webkit-details-marker, .notion-toggle-summary::marker { display: none; content: none; }
+.notion-content .notion-toggle-summary > :is(h2, h3, h4) { margin: 0; font-weight: 500; line-height: 1.25; }
+.notion-content .notion-toggle-summary > h2 { font-size: 1.5rem; }
+.notion-content .notion-toggle-summary > h3 { font-size: 1.2rem; }
+.notion-toggle-chevron { flex: none; margin-left: auto; color: var(--paper-2); transition: rotate var(--duration-standard) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+.notion-toggle[open] > summary .notion-toggle-chevron { rotate: 180deg; color: var(--paper-1); }
+@media (hover: hover) and (pointer: fine) {
+  .notion-toggle-summary:hover .notion-toggle-chevron { color: var(--paper-0); }
+}
+.notion-toggle > summary + * { margin-top: 0; }
+.notion-toggle > :last-child:not(summary) { margin-bottom: 24px; }
+/* Height and fade follow the open state where ::details-content exists;
+   elsewhere the content fades in on open. */
+.notion-toggle::details-content { block-size: 0; overflow: clip; opacity: 0; transition: block-size var(--duration-considered) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard), content-visibility var(--duration-considered) allow-discrete; }
+.notion-toggle[open]::details-content { block-size: auto; opacity: 1; }
+@supports not selector(::details-content) {
+  .notion-toggle[open] > :not(summary) { animation: toggle-open var(--duration-standard) var(--ease-standard) both; }
+}
 @keyframes toggle-open { from { opacity: 0; translate: 0 -4px; } }
 /* Media, embeds, bookmarks, files */
 .notion-media { margin: 2.5rem 0; }

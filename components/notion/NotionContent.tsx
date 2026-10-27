@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
+import { ChevronDown } from "lucide-react";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import SystemFlow, { parseFlow } from "@/components/SystemFlow";
-import { slugify } from "@/lib/markdown";
+import { normalizeHeadings, slugify } from "@/lib/markdown";
 import { CodeBlock } from "@/components/arc/code-block/code-block";
 import ZoomableImage from "./ZoomableImage";
 
@@ -57,13 +58,19 @@ const components: Components = {
     );
   },
   details: ({ className, children, open }) => <details className={`notion-toggle ${className || ""}`} open={open}>{children}</details>,
+  summary: ({ children }) => (
+    <summary className="notion-toggle-summary">
+      {children}
+      <ChevronDown size={20} strokeWidth={1.75} className="notion-toggle-chevron" aria-hidden="true" />
+    </summary>
+  ),
 };
 
 export default function NotionContent({ markdown, className = "" }: { markdown: string; className?: string }) {
   return (
     <article className={`notion-content prose prose-invert max-w-none ${className}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
-        {markdown}
+        {normalizeHeadings(markdown)}
       </ReactMarkdown>
     </article>
   );
