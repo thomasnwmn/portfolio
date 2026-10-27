@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ViewTransition } from "react";
+import { Suspense, ViewTransition } from "react";
 import { ArrowLeft, ArrowUpRight, Clock, FolderGit2, Globe, MessageSquare } from "lucide-react";
 import RepositoryBrowserLoader from "@/components/RepositoryBrowserLoader";
 import ProjectVisual from "@/components/ProjectVisual";
 import NotionContent from "@/components/notion/NotionContent";
 import TableOfContents from "@/components/notion/TableOfContents";
 import TechTags from "@/components/TechTags";
+import DetailSkeleton from "@/components/DetailSkeleton";
 import { getProject, getProjectContent, getProjects, formatLastEdited } from "@/lib/projects";
 import { extractHeadings, readingMinutes } from "@/lib/markdown";
 
@@ -30,7 +31,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProjectPage({ params }: Props) {
+// The shell and back link don't depend on the slug, so they belong to the
+// route's App Shell; the project itself streams in behind Suspense.
+export default function ProjectPage({ params }: Props) {
+  return (
+    <>
+    <div className="reading-progress" aria-hidden="true" />
+    <div className="page-shell project-detail">
+      <Link href="/work" transitionTypes={["project-back"]} className="back-link">
+        <ArrowLeft size={14} aria-hidden="true" /> All projects
+      </Link>
+      <Suspense fallback={<DetailSkeleton label="Loading project" />}><Project params={params} /></Suspense>
+    </div>
+    </>
+  );
+}
+
+async function Project({ params }: Props) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
   const data = await getProjectContent(decodedSlug);
@@ -45,11 +62,6 @@ export default async function ProjectPage({ params }: Props) {
 
   return (
     <>
-    <div className="reading-progress" aria-hidden="true" />
-    <div className="page-shell project-detail">
-      <Link href="/work" transitionTypes={["project-back"]} className="back-link">
-        <ArrowLeft size={14} aria-hidden="true" /> All projects
-      </Link>
       <div className="section-heading">
         <div>
           <p className="eyebrow mb-7">Project {project.number}{project.discipline && ` / ${project.discipline}`}</p>
@@ -110,17 +122,16 @@ export default async function ProjectPage({ params }: Props) {
 
       {allProjects.length > 1 && (
         <nav aria-label="More projects" className="project-pagination">
-          <Link href={`/work/${previous.slug}`} transitionTypes={["project-back"]}>
+          <Link href={`/work/${previous.slug}`} prefetch transitionTypes={["project-back"]}>
             <span className="eyebrow">← Previous project</span>
             <span className="mt-3 block text-xl">{previous.title}</span>
           </Link>
-          <Link href={`/work/${next.slug}`} transitionTypes={["project-open"]}>
+          <Link href={`/work/${next.slug}`} prefetch transitionTypes={["project-open"]}>
             <span className="eyebrow">Next project →</span>
             <span className="mt-3 block text-xl">{next.title}</span>
           </Link>
         </nav>
       )}
-    </div>
     </>
   );
 }

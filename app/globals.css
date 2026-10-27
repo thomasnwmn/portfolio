@@ -68,8 +68,10 @@ button { cursor: pointer; }
 main:focus { outline: none; }
 /* Links carry inline padding for the hover highlight; the list's negative
    margin keeps the text edges where they were. */
-.nav-list { margin-inline: -10px; }
-.nav-link { isolation: isolate; display: inline-block; padding: 9px 10px; border-radius: 10px; }
+.nav-list { isolation: isolate; margin-inline: -10px; }
+/* Isolate the list, not each link: the gliding highlight crosses neighbouring
+   links mid-flight and must stay beneath all of their labels. */
+.nav-link { display: inline-block; padding: 9px 10px; border-radius: 10px; }
 .nav-link[aria-current="page"] { color: var(--paper-0); }
 .nav-hover { position: absolute; inset: 2px 0; z-index: -1; border-radius: inherit; background: var(--ink-1); }
 .nav-current { position: absolute; left: 10px; right: 10px; bottom: 3px; height: 1px; background: var(--chrome-hi); }
@@ -259,8 +261,9 @@ body > header, body > footer { flex-shrink: 0; }
 .notion-toggle > summary + * { margin-top: 0; }
 .notion-toggle > :last-child:not(summary) { margin-bottom: 24px; }
 /* Height and fade follow the open state where ::details-content exists;
-   elsewhere the content fades in on open. */
-.notion-toggle::details-content { block-size: 0; overflow: clip; opacity: 0; transition: block-size var(--duration-considered) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard), content-visibility var(--duration-considered) allow-discrete; }
+   elsewhere the content fades in on open. flow-root keeps the children's
+   margins inside the animated box, so the height doesn't jump at either end. */
+.notion-toggle::details-content { display: flow-root; block-size: 0; overflow: clip; opacity: 0; transition: block-size var(--duration-considered) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard), content-visibility var(--duration-considered) allow-discrete; }
 .notion-toggle[open]::details-content { block-size: auto; opacity: 1; }
 @supports not selector(::details-content) {
   .notion-toggle[open] > :not(summary) { animation: toggle-open var(--duration-standard) var(--ease-standard) both; }

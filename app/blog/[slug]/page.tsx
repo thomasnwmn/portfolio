@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ArrowLeft, CalendarDays, Clock } from "lucide-react";
 import { getPostBySlug, getPosts, formatLastEdited } from "@/lib/notion";
 import { extractHeadings, formatDate, readingMinutes } from "@/lib/markdown";
 import NotionContent from "@/components/notion/NotionContent";
 import TableOfContents from "@/components/notion/TableOfContents";
 import TechTags from "@/components/TechTags";
+import DetailSkeleton from "@/components/DetailSkeleton";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -28,7 +30,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function BlogPost({ params }: Props) {
+// The shell and back link don't depend on the slug, so they belong to the
+// route's App Shell; the post itself streams in behind Suspense.
+export default function BlogPost({ params }: Props) {
+  return (
+    <>
+      <div className="reading-progress" aria-hidden="true" />
+      <div className="page-shell">
+        <Link href="/blog" className="back-link"><ArrowLeft size={14} aria-hidden="true" /> All posts</Link>
+        <Suspense fallback={<DetailSkeleton label="Loading post" />}><Post params={params} /></Suspense>
+      </div>
+    </>
+  );
+}
+
+async function Post({ params }: Props) {
   const { slug } = await params;
   const data = await getPostBySlug(decodeURIComponent(slug));
   if (!data) notFound();
@@ -43,49 +59,45 @@ export default async function BlogPost({ params }: Props) {
 
   return (
     <>
-      <div className="reading-progress" aria-hidden="true" />
-      <div className="page-shell">
-        <Link href="/blog" className="back-link"><ArrowLeft size={14} aria-hidden="true" /> All posts</Link>
-        <header className="post-header">
-          <div className="post-meta">
-            {post.date && <span><CalendarDays size={13} aria-hidden="true" /><time dateTime={post.date}>{formatDate(post.date)}</time></span>}
-            <span><Clock size={13} aria-hidden="true" />{readingMinutes(markdown)} min read</span>
-            <TechTags tags={post.tags} />
-          </div>
-          <h1 className="page-title">{post.title}</h1>
-          {post.summary && <p className="section-intro">{post.summary}</p>}
-        </header>
-
-        {post.image && (
-          <div className="post-cover">
-            <Image src={post.image} alt="" fill priority sizes="(max-width: 1280px) 100vw, 1200px" className="object-cover" />
-          </div>
-        )}
-
-        <div className="content-layout">
-          <NotionContent markdown={markdown} />
-          <aside><TableOfContents headings={headings} /></aside>
+      <header className="post-header">
+        <div className="post-meta">
+          {post.date && <span><CalendarDays size={13} aria-hidden="true" /><time dateTime={post.date}>{formatDate(post.date)}</time></span>}
+          <span><Clock size={13} aria-hidden="true" />{readingMinutes(markdown)} min read</span>
+          <TechTags tags={post.tags} />
         </div>
+        <h1 className="page-title">{post.title}</h1>
+        {post.summary && <p className="section-intro">{post.summary}</p>}
+      </header>
 
-        {post.lastEditedTime && <p className="page-meta">{formatLastEdited(post.lastEditedTime)}</p>}
+      {post.image && (
+        <div className="post-cover">
+          <Image src={post.image} alt="" fill priority sizes="(max-width: 1280px) 100vw, 1200px" className="object-cover" />
+        </div>
+      )}
 
-        {(newer || older) && (
-          <nav aria-label="More posts" className="project-pagination">
-            {older ? (
-              <Link href={`/blog/${older.slug}`}>
-                <span className="eyebrow">← Older post</span>
-                <span className="mt-3 block text-xl">{older.title}</span>
-              </Link>
-            ) : <span />}
-            {newer && (
-              <Link href={`/blog/${newer.slug}`}>
-                <span className="eyebrow">Newer post →</span>
-                <span className="mt-3 block text-xl">{newer.title}</span>
-              </Link>
-            )}
-          </nav>
-        )}
+      <div className="content-layout">
+        <NotionContent markdown={markdown} />
+        <aside><TableOfContents headings={headings} /></aside>
       </div>
+
+      {post.lastEditedTime && <p className="page-meta">{formatLastEdited(post.lastEditedTime)}</p>}
+
+      {(newer || older) && (
+        <nav aria-label="More posts" className="project-pagination">
+          {older ? (
+            <Link href={`/blog/${older.slug}`} prefetch>
+              <span className="eyebrow">← Older post</span>
+              <span className="mt-3 block text-xl">{older.title}</span>
+            </Link>
+          ) : <span />}
+          {newer && (
+            <Link href={`/blog/${newer.slug}`} prefetch>
+              <span className="eyebrow">Newer post →</span>
+              <span className="mt-3 block text-xl">{newer.title}</span>
+            </Link>
+          )}
+        </nav>
+      )}
     </>
   );
 }

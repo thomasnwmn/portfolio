@@ -9,7 +9,7 @@ import { Badge } from "./arc/badge/badge";
 export default function ProjectCard({ project, index = 0 }: { project: Project; index?: number }) {
   const hasSource = !!(project.sourceUrl || project.repositoryBrowser);
   return (
-    <Link href={`/work/${project.slug}`} transitionTypes={["project-open"]} className="project-card reveal group" style={{ "--i": index } as CSSProperties} aria-label={`View ${project.title}`}>
+    <Link href={`/work/${project.slug}`} prefetch transitionTypes={["project-open"]} className="project-card reveal group" style={{ "--i": index } as CSSProperties} aria-label={`View ${project.title}`}>
       <ViewTransition name={`visual-${project.slug}`} share="project-morph" default="none"><ProjectVisual project={project} /></ViewTransition>
       <div className="p-6 md:p-8">
         <div className="mb-5 flex items-center justify-between gap-3"><p className="eyebrow">{project.discipline}</p><span className="card-arrow" aria-hidden="true">↗</span></div>

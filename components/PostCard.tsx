@@ -8,7 +8,7 @@ import TechTags from "./TechTags";
 
 export default function PostCard({ post, index, featured = false }: { post: Post; index: number; featured?: boolean }) {
   return (
-    <Link href={`/blog/${post.slug}`} className={`post-card reveal ${featured ? "post-card-featured" : ""}`} style={{ "--i": index } as CSSProperties}>
+    <Link href={`/blog/${post.slug}`} prefetch className={`post-card reveal ${featured ? "post-card-featured" : ""}`} style={{ "--i": index } as CSSProperties}>
       <div className="project-visual" aria-hidden="true">
         {post.image ? (
           <Image src={post.image} alt="" fill sizes={featured ? "(max-width: 900px) 100vw, 60vw" : "(max-width: 640px) 100vw, 50vw"} className="object-cover" />
