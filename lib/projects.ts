@@ -44,12 +44,25 @@ export function isPublishedProject(page: PageObjectResponse) {
     && parent === projectsDatabaseId()?.replace(/-/g, "");
 }
 
+// Reads github.com/owner/repo, optionally with /tree/<branch>/<folder>, into
+// the repository browser's config. Anything else is not a browsable repo.
+function githubRepository(link: string | undefined) {
+  const match = link && /^https?:\/\/(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/tree\/([^/]+)(?:\/(.+?))?)?\/?(?:[?#].*)?$/.exec(link);
+  if (!match) return undefined;
+  const [, owner, repo, branch, path] = match;
+  return { url: `https://github.com/${owner}/${repo}`, branch: branch && decodeURIComponent(branch), rootPath: path && decodeURIComponent(path) };
+}
+
 function toProject(page: PageObjectResponse, index: number): Project {
   const { properties } = page;
   const category = properties.Category;
   const stack = properties.Stack;
   const repoUrl = url(properties, "Repo URL");
+  const sourceUrl = url(properties, "Source URL");
   const slug = text(properties, "Slug") || page.id;
+  // "Repo URL" (with its optional branch and path) wins; otherwise any GitHub
+  // source link turns the browser on with no extra setup.
+  const fromSource = githubRepository(sourceUrl);
 
   return {
     id: page.id,
@@ -65,8 +78,8 @@ function toProject(page: PageObjectResponse, index: number): Project {
       url: repoUrl,
       branch: text(properties, "Repo Branch") || undefined,
       rootPath: text(properties, "Repo Path") || undefined,
-    } : undefined,
-    sourceUrl: url(properties, "Source URL"),
+    } : fromSource,
+    sourceUrl,
     liveUrl: url(properties, "Live URL"),
     lastEditedTime: page.last_edited_time,
   };

@@ -1,4 +1,5 @@
 import { getProject } from "@/lib/projects";
+import { highlight } from "@/lib/highlight";
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const config = (await getProject((await params).slug))?.repositoryBrowser;
@@ -42,7 +43,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     } catch {
       return Response.json({ type: "unsupported", message: "Binary files can be viewed or downloaded on GitHub." });
     }
-    return Response.json({ type: "file", content });
+    const { language, lines } = await highlight(content, path);
+    return Response.json({ type: "file", content, language, lines, size: data.size });
   } catch {
     return Response.json({ error: "Could not reach GitHub. Please try again." }, { status: 502 });
   }

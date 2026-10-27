@@ -90,19 +90,16 @@ export default async function ProjectPage({ params }: Props) {
       {markdown ? (
         <div className="content-layout">
           <NotionContent markdown={markdown} className="project-body" />
-          <aside><TableOfContents headings={extractHeadings(markdown)} /></aside>
+          <aside><TableOfContents headings={project.repositoryBrowser ? [...extractHeadings(markdown), { id: "source-code", text: "Source code", level: 2 }] : extractHeadings(markdown)} /></aside>
         </div>
       ) : null}
 
       {project.repositoryBrowser && (
-        <section className="mt-16" aria-label="Project repository">
+        <section className="mt-16" aria-labelledby="source-code">
           <div className="section-rule">
-            <div>
-              <p className="eyebrow">Repository</p>
-              <h2 className="mt-3 text-2xl font-medium tracking-tight">Explore the source.</h2>
-            </div>
+            <h2 id="source-code" className="text-2xl font-medium tracking-tight">Source code</h2>
             <a className="text-link" href={project.repositoryBrowser.url} target="_blank" rel="noreferrer">
-              Open on GitHub <ArrowUpRight size={13} className="inline" aria-hidden="true" />
+              Open repository <ArrowUpRight size={13} className="inline" aria-hidden="true" />
             </a>
           </div>
           <RepositoryBrowserLoader slug={project.slug} config={project.repositoryBrowser} />
