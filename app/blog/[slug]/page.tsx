@@ -60,13 +60,15 @@ async function Post({ params }: Props) {
   return (
     <>
       <header className="post-header">
-        <div className="post-meta">
-          {post.date && <span><CalendarDays size={13} aria-hidden="true" /><time dateTime={post.date}>{formatDate(post.date)}</time></span>}
-          <span><Clock size={13} aria-hidden="true" />{readingMinutes(markdown)} min read</span>
-          <TechTags tags={post.tags} />
+        <div className="title-row">
+          <h1 className="page-title">{post.title}</h1>
+          <p className="title-meta">
+            {post.date && <span><CalendarDays size={14} aria-hidden="true" /><time dateTime={post.date}>{formatDate(post.date)}</time></span>}
+            <span><Clock size={14} aria-hidden="true" />{readingMinutes(markdown)} min read</span>
+          </p>
         </div>
-        <h1 className="page-title">{post.title}</h1>
         {post.summary && <p className="section-intro">{post.summary}</p>}
+        <TechTags tags={post.tags} className="mt-7" />
       </header>
 
       {post.image && (

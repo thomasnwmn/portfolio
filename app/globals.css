@@ -184,7 +184,12 @@ body > header, body > footer { flex-shrink: 0; }
 .back-link:hover { color: var(--paper-0); }
 .back-link:hover svg { translate: -3px 0; }
 .post-header { max-width: 860px; }
-.post-header .post-meta { margin-bottom: 26px; }
+/* Detail pages set their date, reading time or project number beside the
+   title rather than in an eyebrow above it; on narrow screens it wraps below. */
+.title-row { display: flex; flex-wrap: wrap; align-items: last baseline; gap: 12px 28px; }
+.title-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0; color: var(--paper-2); font-size: 14px; line-height: 1.5; }
+.title-meta > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.title-meta > span + span::before { content: "·"; margin-right: 6px; color: var(--paper-2); }
 .post-header .section-intro { margin-top: 24px; max-width: 680px; }
 .post-cover { position: relative; aspect-ratio: 2.4 / 1; margin-top: 56px; overflow: hidden; border: 1px solid var(--hairline); background: var(--ink-1); }
 .content-layout { display: grid; grid-template-columns: minmax(0, 760px) 220px; justify-content: space-between; gap: 64px; margin-top: 64px; }

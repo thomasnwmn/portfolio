@@ -64,8 +64,13 @@ async function Project({ params }: Props) {
     <>
       <div className="section-heading">
         <div>
-          <p className="eyebrow mb-7">Project {project.number}{project.discipline && ` / ${project.discipline}`}</p>
-          <h1 className="page-title project-title">{project.title}</h1>
+          <div className="title-row">
+            <h1 className="page-title project-title">{project.title}</h1>
+            <p className="title-meta">
+              <span>Project {project.number}</span>
+              {project.discipline && <span>{project.discipline}</span>}
+            </p>
+          </div>
         </div>
         <div>
           <p className="section-intro">{project.summary}</p>
