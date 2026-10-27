@@ -103,7 +103,9 @@ export async function getProjects(): Promise<Project[]> {
       const response = await notion.databases.query({
         database_id: databaseId,
         filter: { property: "Published", checkbox: { equals: true } },
-        sorts: [{ property: "Order", direction: "ascending" }],
+        // Notion's API can't read a table's drag-and-drop row order, so
+        // projects follow the order they were added: the newest shows first.
+        sorts: [{ timestamp: "created_time", direction: "descending" }],
         start_cursor: cursor,
       });
       pages.push(...response.results.filter(isFullPage));
