@@ -1,7 +1,8 @@
 import Image from 'next/image';
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { ArrowUpRight } from 'lucide-react';
-import portrait from '@/public/aboutme.png';
+import portrait from '@/public/aboutme.jpg';
 import TechTags from '@/components/TechTags';
 import { ActivityHeatmap } from '@/components/arc/activity-heatmap/activity-heatmap';
 import { getContributions, GITHUB_USERNAME } from '@/lib/github';
@@ -20,9 +21,17 @@ const toolkit = [
   { group: 'Web and tools', tags: ['Next.js', 'Tailwind CSS', 'Node.js', 'Git'] },
 ];
 
-export default async function About() {
+// Only the heatmap waits for GitHub data, so the rest of the page (title,
+// portrait, bio) is in the prerendered HTML instead of streaming in behind the
+// loading skeleton.
+async function Activity() {
   const contributions = await getContributions();
+  return contributions
+    ? <ActivityHeatmap days={contributions.days} label="GitHub contributions in the last year" period="the last year" />
+    : <p className="text-paper-1">Activity couldn’t load right now. The full history is on GitHub.</p>;
+}
 
+export default function About() {
   return (
     <div className="page-shell about-page">
       <section className="about-intro" aria-labelledby="about-title">
@@ -45,9 +54,7 @@ export default async function About() {
               View profile <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden="true" />
             </a>
           </div>
-          {contributions
-            ? <ActivityHeatmap days={contributions.days} label="GitHub contributions in the last year" period="the last year" />
-            : <p className="text-paper-1">Activity couldn’t load right now. The full history is on GitHub.</p>}
+          <Suspense fallback={<div className="skeleton h-[188px] rounded-[var(--radius-control)]" role="status" aria-label="Loading GitHub activity" />}><Activity /></Suspense>
         </section>
       </section>
 

@@ -286,15 +286,21 @@ body > header, body > footer { flex-shrink: 0; }
    scrolls inside its own box instead of widening the page. */
 .about-page { display: grid; gap: 56px; }
 .about-page > * { min-width: 0; }
-/* Desktop: copy and activity stack beside the photo. Phones: copy, photo, then activity. */
-.about-intro { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "copy photo" "activity photo"; column-gap: 40px; align-items: stretch; }
+/* Desktop: copy and activity stack beside the photo. Phones: copy, photo, then activity. Items align to the
+   start rather than stretching, and on desktop the photo is positioned into its area instead of spanning the
+   rows in flow: either one makes the grid lay the heatmap out again, which costs ~250 ms per render. */
+.about-intro { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "copy photo" "activity photo"; column-gap: 40px; align-items: start; }
 .about-copy { grid-area: copy; }
 .about-portrait { grid-area: photo; }
 .about-activity { grid-area: activity; }
 .about-intro > * { min-width: 0; }
 .about-bio { display: grid; gap: 20px; margin-top: 32px; color: var(--paper-1); font-size: 18px; line-height: 1.75; }
 /* The photo fills the height of the text column beside it, cropped toward the subject. */
-.about-portrait { width: 100%; height: 100%; min-height: 420px; object-fit: cover; object-position: 70% 50%; border: 1px solid var(--hairline); }
+.about-portrait { width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; border: 1px solid var(--hairline); }
+@media (min-width: 901px) {
+  .about-intro { position: relative; min-height: 420px; }
+  .about-portrait { position: absolute; inset: 0; }
+}
 .about-heading { font-size: 1.75rem; font-weight: 500; letter-spacing: -.03em; line-height: 1.2; color: var(--paper-0); }
 .about-activity { display: grid; align-content: start; gap: 16px; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--hairline); }
 .about-subheading { font-size: 17px; font-weight: 500; color: var(--paper-0); }
@@ -316,7 +322,7 @@ body > header, body > footer { flex-shrink: 0; }
 .repo-browser { display: grid; grid-template-columns: 280px minmax(0, 1fr); grid-template-areas: "tree code"; height: 620px; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); }
 .repo-code { grid-area: code; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .repo-file-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; min-height: 52px; padding: 8px 12px 8px 20px; border-bottom: 1px solid var(--border); }
-.repo-file-path { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: var(--text-sm); color: var(--text-secondary); overflow-wrap: anywhere; }
+.repo-file-path { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; min-width: 0; font-size: var(--text-sm); color: var(--text-secondary); overflow-wrap: anywhere; }
 .repo-file-path svg { flex: none; margin-right: 4px; color: var(--text-muted); }
 .repo-file-separator { color: var(--text-muted); }
 .repo-file-actions { display: flex; align-items: center; gap: 8px; }
@@ -333,6 +339,17 @@ body > header, body > footer { flex-shrink: 0; }
 .repo-line-number { flex: none; width: 4.5em; padding-right: 1.5em; text-align: right; color: var(--text-muted); opacity: .6; user-select: none; font-variant-numeric: tabular-nums; }
 .repo-line-text { white-space: pre; }
 @media (hover: hover) and (pointer: fine) { .repo-line:hover { background: rgb(255 255 255 / .025); } .repo-line:hover .repo-line-number { opacity: 1; } }
+/* Images, audio and video from the repository. Images centre on a checkerboard so transparency reads as transparent. */
+.repo-media { display: grid; min-height: 100%; place-items: center; padding: 24px; }
+.repo-media:has(.repo-media-image) { background: repeating-conic-gradient(var(--ink-1) 0 25%, var(--ink-0) 0 50%) 0 0 / 16px 16px; }
+.repo-media-image { display: block; max-width: 100%; height: auto; image-rendering: auto; }
+.repo-media video { display: block; max-width: 100%; max-height: 100%; border-radius: var(--radius-control); background: #000; }
+.repo-media-audio audio { width: min(100%, 420px); }
+/* Image / Code switch for SVG files; the pressed side carries the surface. */
+.repo-view-toggle { display: inline-flex; padding: 2px; border: 1px solid var(--border); border-radius: 12px; background: var(--ink-0); }
+.repo-view-toggle button { display: inline-flex; align-items: center; gap: 5px; min-height: calc(var(--control-height-sm) - 6px); padding-inline: 10px; border: 0; border-radius: 10px; background: transparent; color: var(--text-muted); font: inherit; font-size: var(--text-sm); font-weight: 500; cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+.repo-view-toggle button[aria-pressed="true"] { background: color-mix(in oklab, var(--foreground) 11%, transparent); color: var(--foreground); }
+@media (hover: hover) and (pointer: fine) { .repo-view-toggle button:hover { color: var(--foreground); } }
 .repo-tree { grid-area: tree; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 8px; border-right: 1px solid var(--border); background: var(--ink-0); }
 .repo-tree-title { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 10px 12px; font-size: var(--text-sm); font-weight: 500; color: var(--foreground); }
 .repo-tree-title svg { flex: none; color: var(--text-muted); }
@@ -421,7 +438,7 @@ body > header, body > footer { flex-shrink: 0; }
 @media (max-width: 900px) {
   .about-intro { grid-template-columns: minmax(0, 1fr); grid-template-areas: "copy" "photo" "activity"; row-gap: 40px; }
   .about-activity { margin-top: 0; }
-  .about-portrait { height: auto; min-height: 0; aspect-ratio: 4 / 3; }
+  .about-portrait { height: auto; aspect-ratio: 4 / 3; }
 }
 @media (max-width: 768px) {
   .about-page { gap: 44px; }

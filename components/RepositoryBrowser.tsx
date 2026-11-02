@@ -3,7 +3,7 @@
 import type { Project } from "@/lib/projects";
 import type { HighlightedLine } from "@/lib/highlight";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, FileCode2, FolderGit2 } from "lucide-react";
+import { ArrowUpRight, CodeXml, FileAudio, FileCode2, FileImage, FileVideo, FolderGit2, Image as ImageIcon } from "lucide-react";
 import { Alert } from "./arc/alert/alert";
 import { Button } from "./arc/button/button";
 import { CopyButton } from "./arc/copy-button/copy-button";
@@ -12,8 +12,10 @@ import { Skeleton } from "./arc/skeleton/skeleton";
 import { TreeView, type TreeNode } from "./arc/tree-view/tree-view";
 
 type Entry = { name: string; path: string; type: "directory" | "file" };
-type SourceFile = { type: "file"; content: string; language: string; lines: HighlightedLine[]; size: number };
-type Result = { type: "directory"; entries: Entry[]; truncated: boolean } | SourceFile | { type: "unsupported"; message: string };
+// `preview` is set for an SVG, which can be shown as an image or as its source.
+type SourceFile = { type: "file"; content: string; language: string; languageName: string; lines: HighlightedLine[]; size: number; preview?: string };
+type MediaFile = { type: "media"; kind: "image" | "audio" | "video"; url: string; size: number };
+type Result = { type: "directory"; entries: Entry[]; truncated: boolean } | SourceFile | MediaFile | { type: "unsupported"; message: string };
 type Read = (path: string) => Promise<Result>;
 type Folder = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; entries: Entry[]; truncated: boolean };
 
@@ -35,7 +37,8 @@ function buildNodes(path: string, folders: Map<string, Folder>): TreeNode[] {
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} Bytes`;
-  return `${(bytes / 1024).toFixed(bytes < 10240 ? 2 : 1)} KB`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10240 ? 2 : 1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 // GitHub's header counts: total lines, and lines of code that are not blank.
@@ -64,6 +67,20 @@ function CodeView({ file }: { file: SourceFile }) {
   );
 }
 
+// Images sit on a checkerboard so transparent areas read as transparent.
+function MediaView({ kind, url, name }: { kind: MediaFile["kind"]; url: string; name: string }) {
+  if (kind === "audio") return <div className="repo-media repo-media-audio"><audio controls preload="metadata" src={url} aria-label={name} /></div>;
+  if (kind === "video") return <div className="repo-media"><video controls preload="metadata" src={url} aria-label={name} /></div>;
+  return (
+    <ScrollArea orientation="both" viewportClassName="repo-code-scroll" label="Image preview">
+      {/* eslint-disable-next-line @next/next/no-img-element -- repository files have unknown sizes and come through the raw route */}
+      <div className="repo-media"><img className="repo-media-image" src={url} alt={name} decoding="async" /></div>
+    </ScrollArea>
+  );
+}
+
+const FILE_ICONS = { image: FileImage, audio: FileAudio, video: FileVideo } as const;
+
 export default function RepositoryBrowser({ slug, config }: { slug: string; config: NonNullable<Project["repositoryBrowser"]> }) {
   const [read] = useState<Read>(() => {
     const cache = new Map<string, Promise<Result>>();
@@ -85,11 +102,12 @@ export default function RepositoryBrowser({ slug, config }: { slug: string; conf
   const [selected, setSelected] = useState<string | null>(null);
   const [file, setFile] = useState<Result | null>(null);
   const [error, setError] = useState("");
+  const [svgView, setSvgView] = useState<"preview" | "code">("preview");
   const sequence = useRef(0);
 
   const select = useCallback(async (path: string) => {
     const request = ++sequence.current;
-    setSelected(path); setFile(null); setError("");
+    setSelected(path); setFile(null); setError(""); setSvgView("preview");
     try { const data = await read(path); if (request === sequence.current) setFile(data); }
     catch (reason) { if (request === sequence.current) setError(reason instanceof Error ? reason.message : "Unable to load file."); }
   }, [read]);
@@ -129,12 +147,15 @@ export default function RepositoryBrowser({ slug, config }: { slug: string; conf
   const repository = config.url.replace(/^https:\/\/github\.com\//, "").replace(/\/$/, "");
   const githubUrl = selected && `${config.url.replace(/\/$/, "")}/blob/${encodeURIComponent(config.branch || "HEAD")}/${[config.rootPath, selected].filter(Boolean).join("/").split("/").map(encodeURIComponent).join("/")}`;
   const stats = file?.type === "file" ? lineStats(file.content) : null;
+  const name = selected?.split("/").pop() ?? "";
+  const FileIcon = file?.type === "media" ? FILE_ICONS[file.kind] : file?.type === "file" && file.preview ? FileImage : FileCode2;
+  const showPreview = file?.type === "file" && file.preview && svgView === "preview";
 
   return <div className="repo-browser">
     <div className="repo-code">
       <div className="repo-file-bar">
         <p className="repo-file-path">
-          <FileCode2 size={16} strokeWidth={1.75} aria-hidden="true" />
+          <FileIcon size={16} strokeWidth={1.75} aria-hidden="true" />
           {selected ? selected.split("/").map((part, index, parts) => (
             <Fragment key={index}>
               <span className={index === parts.length - 1 ? "text-paper-0" : undefined}>{part}</span>
@@ -142,10 +163,18 @@ export default function RepositoryBrowser({ slug, config }: { slug: string; conf
             </Fragment>
           )) : <span>Source code</span>}
         </p>
-        {file?.type === "file" && stats && (
+        {(file?.type === "file" || file?.type === "media") && (
           <div className="repo-file-actions">
-            <span className="repo-file-meta">{stats.lines} lines ({stats.loc} loc) · {formatSize(file.size)}</span>
-            <CopyButton value={file.content} label="Copy" variant="plain" />
+            <span className="repo-file-meta">
+              {file.type === "file" && stats ? <>{file.languageName} · {stats.lines} lines ({stats.loc} loc)</> : <span className="capitalize">{file.type === "media" ? file.kind : ""}</span>} · {formatSize(file.size)}
+            </span>
+            {file.type === "file" && file.preview && (
+              <div className="repo-view-toggle" role="group" aria-label="Show SVG as">
+                <button type="button" aria-pressed={svgView === "preview"} onClick={() => setSvgView("preview")}><ImageIcon size={14} strokeWidth={1.75} aria-hidden="true" />Image</button>
+                <button type="button" aria-pressed={svgView === "code"} onClick={() => setSvgView("code")}><CodeXml size={14} strokeWidth={1.75} aria-hidden="true" />Code</button>
+              </div>
+            )}
+            {file.type === "file" && !showPreview && <CopyButton value={file.content} label="Copy" variant="plain" />}
             {githubUrl && <a className="repo-github-link" href={githubUrl} target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden="true" /></a>}
           </div>
         )}
@@ -161,7 +190,8 @@ export default function RepositoryBrowser({ slug, config }: { slug: string; conf
           </div>
         )}
         {file?.type === "unsupported" && <div className="repo-code-state"><Alert tone="info" title="Preview unavailable">{file.message}</Alert></div>}
-        {file?.type === "file" && <CodeView file={file} />}
+        {file?.type === "media" && <MediaView key={file.url} kind={file.kind} url={file.url} name={name} />}
+        {file?.type === "file" && (showPreview ? <MediaView key={file.preview} kind="image" url={file.preview!} name={name} /> : <CodeView file={file} />)}
       </div>
     </div>
     <nav aria-label="Repository files" className="repo-tree">

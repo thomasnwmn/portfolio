@@ -1,3 +1,9 @@
+/* Registered so each length is computed once on the canvas and the cells inherit plain pixels. Unregistered, every
+   cell re-evaluates the container-relative expression itself, and each layout pass that resizes the container
+   restyles all ~370 of them; inside the About page grid that cost ~250 ms per render. */
+@property --heatmap-cell { syntax: "<length>"; inherits: true; initial-value: 12px; }
+@property --heatmap-gap { syntax: "<length>"; inherits: true; initial-value: 3px; }
+@property --heatmap-step { syntax: "<length>"; inherits: true; initial-value: 15px; }
 .root { --level-0: color-mix(in oklab, var(--foreground) 6.5%, var(--surface)); --level-1: color-mix(in oklab, var(--accent) 26%, var(--level-0)); --level-2: color-mix(in oklab, var(--accent) 50%, var(--level-0)); --level-3: color-mix(in oklab, var(--accent) 76%, var(--level-0)); --level-4: var(--accent); container-type: inline-size; position: relative; display: grid; min-width: 0; gap: var(--space-4); color: var(--foreground); }
 .header { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-4); }
 .summary { display: flex; min-width: 0; flex-wrap: wrap; align-items: baseline; column-gap: .3em; margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: var(--leading-body); font-variant-numeric: tabular-nums; }
@@ -13,19 +19,19 @@
 
 /* The scroller starts at its right edge on narrow screens (the most recent weeks) without script, through its writing direction. */
 .scroller { direction: rtl; overflow-x: auto; overflow-y: hidden; margin: -6px; padding: 6px; overscroll-behavior-x: contain; scrollbar-color: var(--border-strong) transparent; scrollbar-width: thin; }
-.canvas { --gap: 3px; --label: 30px; --cell: clamp(9px, calc((100cqi - var(--label) - var(--gap) * 53) / 53), 15px); --step: calc(var(--cell) + var(--gap)); direction: ltr; display: grid; width: max-content; grid-template-columns: var(--label) auto; grid-template-rows: auto auto; column-gap: var(--gap); row-gap: var(--space-2); }
+.canvas { --heatmap-gap: 3px; --label: 30px; --heatmap-cell: clamp(9px, calc((100cqi - var(--label) - var(--heatmap-gap) * 53) / 53), 15px); --heatmap-step: calc(var(--heatmap-cell) + var(--heatmap-gap)); direction: ltr; display: grid; width: max-content; grid-template-columns: var(--label) auto; grid-template-rows: auto auto; column-gap: var(--heatmap-gap); row-gap: var(--space-2); }
 .months { position: relative; grid-row: 1; grid-column: 2; height: 1rem; color: var(--text-muted); font-size: var(--text-xs); line-height: 1rem; }
 /* Month labels glide to their new week when a range starts on a different weekday. */
-.month { position: absolute; top: 0; left: 0; white-space: nowrap; transform: translateX(calc(var(--col) * var(--step))); transition: transform var(--duration-spring) var(--ease-spring); }
+.month { position: absolute; top: 0; left: 0; white-space: nowrap; transform: translateX(calc(var(--col) * var(--heatmap-step))); transition: transform var(--duration-spring) var(--ease-spring); }
 /* Weekday labels stay pinned while a narrow grid scrolls under them. Set --heatmap-surface when the heatmap sits on another surface. */
-.weekdays { position: sticky; z-index: 1; left: -6px; display: grid; grid-row: 1 / 3; grid-column: 1; grid-template-rows: repeat(7, var(--cell)); align-content: end; row-gap: var(--gap); margin: 0 calc(var(--gap) * -1) 0 -6px; padding: 0 var(--gap) 0 6px; background: var(--heatmap-surface, var(--surface)); color: var(--text-muted); font-size: var(--text-xs); }
-.weekday { display: flex; height: var(--cell); align-items: center; white-space: nowrap; line-height: 1; }
+.weekdays { position: sticky; z-index: 1; left: -6px; display: grid; grid-row: 1 / 3; grid-column: 1; grid-template-rows: repeat(7, var(--heatmap-cell)); align-content: end; row-gap: var(--heatmap-gap); margin: 0 calc(var(--heatmap-gap) * -1) 0 -6px; padding: 0 var(--heatmap-gap) 0 6px; background: var(--heatmap-surface, var(--surface)); color: var(--text-muted); font-size: var(--text-xs); }
+.weekday { display: flex; height: var(--heatmap-cell); align-items: center; white-space: nowrap; line-height: 1; }
 .plot { position: relative; grid-row: 2; grid-column: 2; }
-.grid { display: grid; gap: var(--gap); outline: none; }
-.row { display: flex; gap: var(--gap); }
+.grid { display: grid; gap: var(--heatmap-gap); outline: none; }
+.row { display: flex; gap: var(--heatmap-gap); }
 
 /* One square per day. The wave delay rides a custom property so a reveal and a recolor sweep the same diagonal. */
-.cell { --delay: var(--wave); display: block; width: var(--cell); height: var(--cell); flex: none; border-radius: calc(var(--cell) * .28); background: var(--level-0); outline: 1.5px solid transparent; outline-offset: 1px; cursor: default; -webkit-tap-highlight-color: transparent; transition: background-color 320ms var(--ease-standard) var(--delay), transform var(--duration-spring) var(--ease-spring) var(--delay), opacity var(--duration-fast) var(--ease-standard); }
+.cell { --delay: var(--wave); display: block; width: var(--heatmap-cell); height: var(--heatmap-cell); flex: none; border-radius: calc(var(--heatmap-cell) * .28); background: var(--level-0); outline: 1.5px solid transparent; outline-offset: 1px; cursor: default; -webkit-tap-highlight-color: transparent; transition: background-color 320ms var(--ease-standard) var(--delay), transform var(--duration-spring) var(--ease-spring) var(--delay), opacity var(--duration-fast) var(--ease-standard); }
 .grid[data-direction="back"] .cell { --delay: var(--wave-back); }
 .cell[data-level="1"] { background: var(--level-1); }
 .cell[data-level="2"] { background: var(--level-2); }
@@ -41,7 +47,7 @@
 @media (hover: hover) and (pointer: fine) { .cell:not([data-empty]):hover { outline-color: color-mix(in oklab, var(--foreground) 45%, transparent); } }
 
 /* The selection ring glides between days, and follows its day when the range changes. */
-.ring { position: absolute; top: -3px; left: -3px; width: calc(var(--cell) + 6px); height: calc(var(--cell) + 6px); border: 1.5px solid var(--foreground); border-radius: calc(var(--cell) * .28 + 3px); opacity: 0; pointer-events: none; transform: translate(calc(var(--col) * var(--step)), calc(var(--row) * var(--step))); transition: transform var(--duration-spring) var(--ease-spring), opacity var(--duration-fast) var(--ease-standard); }
+.ring { position: absolute; top: -3px; left: -3px; width: calc(var(--heatmap-cell) + 6px); height: calc(var(--heatmap-cell) + 6px); border: 1.5px solid var(--foreground); border-radius: calc(var(--heatmap-cell) * .28 + 3px); opacity: 0; pointer-events: none; transform: translate(calc(var(--col) * var(--heatmap-step)), calc(var(--row) * var(--heatmap-step))); transition: transform var(--duration-spring) var(--ease-spring), opacity var(--duration-fast) var(--ease-standard); }
 .ring[data-shown] { opacity: 1; }
 
 .legend { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: var(--space-3); color: var(--text-muted); font-size: var(--text-xs); }

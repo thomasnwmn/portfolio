@@ -1,5 +1,5 @@
 import Image from "next/image";
-import banner from "@/public/banner_outlook.png";
+import banner from "@/public/banner_outlook.jpg";
 import { getProject } from "@/lib/projects";
 import { Suspense } from "react";
 import type { Metadata } from "next";
